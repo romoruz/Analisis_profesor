@@ -78,7 +78,7 @@ SD-II, reproduce los resultados de `legacy/`.
       ejercicio."
       *Acepta:* con las transcripciones de `legacy/.../corpus` convertidas al formato, saca 4
       preguntas por examen y el conteo correcto por tarea.
-- [ ] 1.5 `similitud`: portar `legacy/.../nucleo/similitud.py`, con un TF-IDF en Python puro si
+- [x] 1.5 `similitud`: portar `legacy/.../nucleo/similitud.py`, con un TF-IDF en Python puro si
       no hay sklearn.
       *Acepta:* reproduce `legacy/.../salidas/similitud.json` (±0.01) con sklearn, y la misma
       clasificación sin sklearn.
