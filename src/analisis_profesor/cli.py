@@ -10,11 +10,11 @@ import json
 import platform
 import shutil
 import sys
+from pathlib import Path
 
 from analisis_profesor import __version__
 
 PENDIENTES = {
-    "ingesta": ("Fase 1", "zip -> 00_crudo, 01_inventario.csv, 02_texto/, pendientes"),
     "items": ("Fase 1", "02_texto/*.md -> 03_items.jsonl"),
     "similitud": ("Fase 1", "03_items.jsonl -> 04_similitud.json"),
     "plantilla-etiquetas": ("Fase 1", "-> 05_etiquetas.csv con una fila por ítem"),
@@ -57,6 +57,11 @@ def main(argv: list[str] | None = None) -> int:
     sub = p.add_subparsers(dest="cmd", required=True)
     sub.add_parser("version")
     sub.add_parser("diagnostico", help="qué modo del PROTOCOLO se puede usar aquí")
+    s_ingesta = sub.add_parser(
+        "ingesta", help="zip -> 00_crudo, 01_inventario.csv, 02_texto/, pendientes"
+    )
+    s_ingesta.add_argument("zip", help="ruta al archivo .zip con el material")
+    s_ingesta.add_argument("--materia", "-m", default="", help="id corto para trabajo/<id>/")
     for nombre, (_fase, ayuda) in PENDIENTES.items():
         s = sub.add_parser(nombre, help=ayuda)
         s.add_argument("args", nargs="*")
@@ -71,6 +76,18 @@ def main(argv: list[str] | None = None) -> int:
         print(f"\nModo del PROTOCOLO: {d['modo'].upper()}")
         if not d["lector_pdf"]:
             print("Sin lector de PDF: transcribe los PDFs mirándolos (paso 2).")
+        return 0
+    if a.cmd == "ingesta":
+        ruta_zip = Path(a.zip)
+        if not ruta_zip.is_file():
+            print(f"Error: no existe el archivo {ruta_zip}", file=sys.stderr)
+            return 1
+        materia = a.materia or ruta_zip.stem
+        from analisis_profesor.ingesta import ingestar
+
+        docs = ingestar(ruta_zip, materia)
+        n_pend = sum(1 for d in docs if d.necesita_transcripcion)
+        print(f"Ingesta completa en trabajo/{materia}/: {len(docs)} archivos, {n_pend} pendientes.")
         return 0
     fase, _ = PENDIENTES[a.cmd]
     print(f"PENDIENTE: `{a.cmd}` se implementa en la {fase} (docs/ROADMAP.md). "

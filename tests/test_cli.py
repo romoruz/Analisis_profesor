@@ -14,5 +14,7 @@ def test_ap_py_sin_instalar():
 
 
 def test_pendiente_devuelve_2():
-    from analisis_profesor.cli import main
-    assert main(["ingesta", "x.zip"]) == 2
+    from analisis_profesor.cli import PENDIENTES, main
+
+    cmd = next(iter(PENDIENTES))
+    assert main([cmd, "x"]) == 2

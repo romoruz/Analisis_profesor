@@ -62,7 +62,7 @@ SD-II, reproduce los resultados de `legacy/`.
         git) y se saltan si no existe.
 
       *Acepta:* `pytest` pasa con y sin `entrada/sd2/`.
-- [ ] 1.3 `ingesta`:
+- [x] 1.3 `ingesta`:
       - descomprime en `trabajo/<id>/00_crudo` y calcula el sha256;
       - `01_inventario.csv` con tipo, fecha y parcial por reglas de nombre y contenido;
       - texto de PDF con respaldos fitz → pypdf → pdfplumber → `pdftotext` → nada;
@@ -71,7 +71,11 @@ SD-II, reproduce los resultados de `legacy/`.
 
       *Acepta:* con el zip original de SD-II, inventario correcto y las 4 fotos en pendientes.
 - [ ] 1.4 `items`: lee `02_texto/*.md` en el formato del paso 2 (incluye `calificacion_alumno`) y
-      escribe `03_items.jsonl`.
+      escribe `03_items.jsonl`. Regla de segmentación (dejar también en `PROTOCOLO.md` §3 al
+      hacer la 1.4): "En exámenes el ítem etiquetable es la pregunta (Q3) y sus incisos son
+      ítems hijos con padre_id. En tareas, si los incisos son ejercicios independientes (otros
+      datos u otro objeto), cada inciso es el ítem etiquetable (T1:2a); si no, lo es el
+      ejercicio."
       *Acepta:* con las transcripciones de `legacy/.../corpus` convertidas al formato, saca 4
       preguntas por examen y el conteo correcto por tarea.
 - [ ] 1.5 `similitud`: portar `legacy/.../nucleo/similitud.py`, con un TF-IDF en Python puro si
