@@ -1,0 +1,33 @@
+# Curso ficticio inventado para pruebas automatizadas de CI (sin datos reales).
+id = "mini"
+nombre = "Grafos y Redes Discretas"
+profesor = "Vega"
+semestre = "2026-I"
+
+[objetivo]
+parcial = "P1"
+fecha = "2026-09-20"
+temas = ["1.1", "1.2", "1.3", "1.4"]
+molde = ["P1_2025-04-10", "P1_2026-04-15"]
+ya_examinado_este_semestre = []
+
+[formato]
+preguntas = { "4" = 1.0 }
+minutos = [75, 95]
+puntos_por_pregunta = [2.5, 2.5, 2.5, 2.5]
+
+[arquetipos]
+A = ["Grados de vértices y lema del apretón de manos", 20]
+B = ["Recorridos eulerianos y hamiltonianos en grafos conexos", 20]
+C = ["Árboles generadores de peso mínimo (algoritmo de Kruskal)", 25]
+D = ["Coloración de vértices y número cromático", 25]
+E = ["Emparejamientos en grafos bipartitos y condición de Hall", 20]
+F = ["Demostración sobre árboles, conexidad y ciclos", 20]
+
+[rasgos]
+
+[modelo]
+semilla = 2026
+beta = 6
+suavizado = 0.3
+rho = 0.6
