@@ -51,7 +51,7 @@ F0 base ─> F1 rebanada SD-II ─> F2 prueba en chats ─> F3 extracción/etiqu
 Meta: cada paso [script] del protocolo existe en versión mínima y, alimentado con los datos de
 SD-II, reproduce los resultados de `legacy/`.
 
-- [ ] 1.1 **CI** (GitHub Actions) con tres trabajos: (a) Python 3.11 y 3.12 con `dev,completo`;
+- [x] 1.1 **CI** (GitHub Actions) con tres trabajos: (a) Python 3.11 y 3.12 con `dev,completo`;
       (b) "sandbox mínimo", solo numpy y scipy; (c) "Python puro", sin nada, que corre
       `ap.py diagnostico` y `ap.py items` con `python -I`.
       *Acepta:* los tres en verde en el PR.
