@@ -84,7 +84,7 @@ SD-II, reproduce los resultados de `legacy/`.
       clasificación sin sklearn.
 - [x] 1.6 `plantilla-etiquetas` y su lector: `05_etiquetas.csv` ↔ `Etiqueta`, más un convertidor
       `legacy rasgos_dificultad.csv → 05_etiquetas.csv`.
-- [ ] 1.7 `dificultad`: portar `legacy/.../nucleo/dificultad.py` (rasgos desde `materia.toml`) y
+- [x] 1.7 `dificultad`: portar `legacy/.../nucleo/dificultad.py` (rasgos desde `materia.toml`) y
       agregar IC BCa y permutación por cambio de signo para el delta por pares.
       *Acepta:* reproduce `legacy/.../salidas/dificultad.json` (deltas 0.27 y 0.40, totales 13.4,
       12.3, 8.0 y 8.4).
