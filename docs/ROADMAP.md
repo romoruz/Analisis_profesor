@@ -104,6 +104,37 @@ SD-II, reproduce los resultados de `legacy/`.
 - [ ] 1.11 **E2E**: `scripts/e2e.sh <id>` corre todos los pasos [script] sobre `trabajo/<id>/`.
       *Acepta:* corre con `mini` en CI y con SD-II en local.
 
+## Lotes y carriles (para ir más rápido sin perder rigor)
+
+Antigravity trabaja por **lotes** con `/lote <tareas>`: hace merge solo si pasan la CI y la
+auditoría (`/auditar`), y se detiene ante cualquier discrepancia. El orquestador revisa cada lote
+completo.
+
+| Lote | Tareas | Depende de | Carril |
+|---|---|---|---|
+| A | 1.6 etiquetas, 1.7 dificultad (+ `estadistica.py`) | 1.5 | 1 |
+| B | 1.8 modelo | A | 1 |
+| C | 1.9 verificar | 1.4 | 2 (en paralelo con A y B) |
+| D | 1.10 armar, 1.11 E2E | B, C | 1 |
+| E | 3.4 chequeos de transcripción, 5.1 empaquetar kit | 1.4 | 2 |
+
+Dos agentes pueden trabajar en paralelo solo en **carriles distintos**, cada uno en su propio
+`git worktree` (p. ej. `../Analisis_profesor-carril2`), y nunca tocan los mismos archivos.
+
+**Precisiones de rigor para el lote A:**
+
+- 1.7 usa `estadistica.py` con:
+  - BCa contrastado con `scipy.stats.bootstrap(method="BCa")` (diferencia ≤ 0.02 con 10 000
+    remuestras y la misma semilla);
+  - permutación por cambio de signo exacta si n ≤ 20 (enumerar las 2ⁿ asignaciones);
+    Monte Carlo con semilla si n > 20;
+  - Wilcoxon contra `scipy.stats.wilcoxon`;
+  - Spearman contra `scipy.stats.spearmanr`, con IC bootstrap;
+  - intervalo de Jeffreys contra `scipy.stats.beta.ppf`.
+- La salida de 1.7 reproduce `legacy/.../salidas/dificultad.json`: deltas por pares de 0.27 y
+  0.40, totales por examen de 13.4, 12.3, 8.0 y 8.4, y fracción ≥ 0.99 de perturbaciones de
+  pesos con el mismo signo. Agrega intervalos y p-valores sin alterar esos números.
+
 ## Fase 2: Prueba en chats reales (dueño + orquestador)
 
 Aquí entra el contexto real. Se hace en cuanto cierre la 1.11, o antes en modo sin código para

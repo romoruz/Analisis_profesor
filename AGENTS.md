@@ -38,6 +38,9 @@ Este repo tiene **dos** usos y un agente debe saber en cuál está:
 - **Datos:** nunca subas `entrada/`, `trabajo/`, zips ni calificaciones. Los fixtures de la CI
   son inventados (`tests/fixtures/mini`).
 - **Incertidumbre:** ningún número estadístico sale de un script sin su intervalo, rango o n.
+- **Rigor:** toda fórmula cita su fuente y tiene un test contra un valor de referencia
+  independiente (`/auditar`). Si un resultado de `legacy/` no se reproduce, se reporta y se
+  detiene: nunca se ajustan umbrales, tolerancias ni datos para que un test pase.
 - Si la tarea es ambigua, pregunta en el PR y detente. No inventes.
 
 ## Estilo
