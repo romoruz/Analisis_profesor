@@ -88,7 +88,7 @@ SD-II, reproduce los resultados de `legacy/`.
       agregar IC BCa y permutación por cambio de signo para el delta por pares.
       *Acepta:* reproduce `legacy/.../salidas/dificultad.json` (deltas 0.27 y 0.40, totales 13.4,
       12.3, 8.0 y 8.4).
-- [ ] 1.8 `modelo`: portar `legacy/.../nucleo/modelo.py`. **Nuevo:** `MATERIAL`, `MOLDE` y la
+- [x] 1.8 `modelo`: portar `legacy/.../nucleo/modelo.py`. **Nuevo:** `MATERIAL`, `MOLDE` y la
       rotación se calculan desde `05_etiquetas.csv` y `materia.toml`. La regla es la de legacy:
       2 por ejercicio de tarea, +1 si se repite, 1 por clase, 0.5 marginal.
       *Acepta:* con `MATERIAL` y `MOLDE` legacy inyectados, reproduce `modelo_parcial3.json`
