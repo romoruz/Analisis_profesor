@@ -1,3 +1,4 @@
+import csv
 import os
 import re
 import shutil
@@ -10,6 +11,15 @@ from analisis_profesor.cli import main
 from analisis_profesor.esquemas import Item, leer_jsonl
 
 RAIZ = Path(__file__).resolve().parents[1]
+_ROMANOS = {"i": "a", "ii": "b", "iii": "c", "iv": "d"}
+
+
+def _mapear_fuente_legacy(fuente: str) -> str:
+    m = re.fullmatch(r"(T\d+)-(\d+)(i{1,3}|iv|[a-z])?", fuente)
+    assert m is not None, f"Formato de fuente inesperado: {fuente!r}"
+    doc, num, suf = m.group(1), m.group(2), m.group(3) or ""
+    letra = _ROMANOS.get(suf, suf)
+    return f"{doc}:{num}{letra}"
 
 
 def _convertir_corpus_sd2(sd2_dir: Path, destino_texto: Path) -> None:
@@ -40,13 +50,25 @@ def _convertir_corpus_sd2(sd2_dir: Path, destino_texto: Path) -> None:
         out = [f"# Sistemas Dinámicos II - Tarea {n} - 0000-00-00", "tipo: tarea", ""]
         for k, bloque in enumerate(bloques, 1):
             cuerpo = re.sub(r"^\s{0,4}\d{1,2}\.\s*", "", bloque, count=1).strip()
-            out.extend([f"## Ejercicio {k}", cuerpo, ""])
+            if n == 4 and k == 3:
+                cuerpo = re.sub(r"(?m)^\s*\(([ab])\)\s*$", r"### \1)", cuerpo)
+            elif n == 4 and k == 13:
+                cuerpo = re.sub(
+                    r"(?m)^\s*(i{1,3})\)\s*",
+                    lambda m: f"\n### {_ROMANOS[m.group(1)]})\n",
+                    cuerpo,
+                )
+            elif n == 4 and k == 14:
+                cuerpo = re.sub(
+                    r"(?m)^(?:\s*14\.)?\s*(i{1,2})\)\s*",
+                    lambda m: f"\n### {_ROMANOS[m.group(1)]})\n",
+                    cuerpo,
+                )
+            out.extend([f"## Ejercicio {k}", cuerpo.strip(), ""])
         (destino_texto / f"T{n}.md").write_text("\n".join(out), encoding="utf-8")
 
 
 def test_segmentar_fixture_mini(mini_dir: Path, tmp_path: Path):
-    import csv
-
     from analisis_profesor.segmentacion import segmentar_carpeta
 
     raiz_trabajo = tmp_path / "trabajo"
@@ -71,6 +93,8 @@ def test_segmentar_fixture_mini(mini_dir: Path, tmp_path: Path):
         "P1_2025-04-10:Q2b",
     }
     assert por_id["P1_2025-04-10:Q1a"].padre_id == "P1_2025-04-10:Q1"
+    assert "10$ vértices" in por_id["P1_2025-04-10:Q1a"].texto
+    assert "Usa el lema" in por_id["P1_2025-04-10:Q1a"].texto
     for q in range(1, 5):
         it = por_id[f"P1_2025-04-10:Q{q}"]
         assert it.puntos_max == 2.5
@@ -172,5 +196,22 @@ def test_items_sd2_real(sd2_dir: Path, tmp_path: Path):
     assert conteos["T1"] == 19
     assert conteos["T2"] == 8
     assert conteos["T3"] == 11
-    assert conteos["T4"] == 14
+    assert conteos["T4"] == 18
     assert conteos["T5"] == 10
+
+    ruta_legacy = (
+        RAIZ / "legacy" / "estudio_parciales" / "cursos"
+        / "sistemas_dinamicos_ii" / "rasgos_dificultad.csv"
+    )
+    with open(ruta_legacy, encoding="utf-8", newline="") as f:
+        fuentes_mapeadas = {
+            _mapear_fuente_legacy(fila["fuente"])
+            for fila in csv.DictReader(f)
+            if fila["tipo"] == "examen"
+            and fila["fuente"] not in ("", "clase")
+            and not fila["fuente"].startswith("E")
+        }
+
+    assert {"T4:3a", "T4:13b", "T4:13c", "T4:14a", "T1:19"}.issubset(fuentes_mapeadas)
+    ids_en_jsonl = {it.id for it in leer_jsonl(raiz_trabajo / "sd2" / "03_items.jsonl", Item)}
+    assert fuentes_mapeadas.issubset(ids_en_jsonl)

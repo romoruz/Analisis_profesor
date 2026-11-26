@@ -9,7 +9,7 @@ from analisis_profesor.esquemas import Item, escribir_jsonl
 _PATRON_PREGUNTA = r"^##\s+Pregunta\s+(\d+)(?:\s*\((\d+(?:\.\d+)?)\s*(?:puntos?|pts?\.?)\))?\s*$"
 _PATRON_EJERCICIO = r"^##\s+Ejercicio\s+(\d+[a-zA-Z]?)\b.*$"
 _PATRON_SECCION = r"^##\s+(.+?)\s*$"
-_PATRON_INCISO = r"^###\s+([a-z]|[ivx]+)\)\s*$"
+_PATRON_INCISO = r"^###\s+([a-z])\)\s*$"
 
 
 def _limpiar_calificaciones(valor: str) -> list[float] | None:
@@ -67,16 +67,18 @@ def _bloques_h2(cuerpo: str, patron: str) -> list[tuple[re.Match[str], str]]:
     return bloques
 
 
-def _partir_incisos(cuerpo: str) -> tuple[str, list[tuple[str, str]]]:
+def _partir_incisos(cuerpo: str) -> list[tuple[str, str]]:
     cabeceras = list(re.finditer(_PATRON_INCISO, cuerpo, re.MULTILINE | re.IGNORECASE))
     if not cabeceras:
-        return cuerpo.strip(), []
+        return []
     comun = cuerpo[: cabeceras[0].start()].strip()
     incisos: list[tuple[str, str]] = []
     for idx, m in enumerate(cabeceras):
         fin = cabeceras[idx + 1].start() if idx + 1 < len(cabeceras) else len(cuerpo)
-        incisos.append((m.group(1).lower(), cuerpo[m.end() : fin].strip()))
-    return comun, incisos
+        inc_cuerpo = cuerpo[m.end() : fin].strip()
+        texto_inc = f"{comun}\n{inc_cuerpo}".strip() if comun else inc_cuerpo
+        incisos.append((m.group(1).lower(), texto_inc))
+    return incisos
 
 
 def segmentar_documento(ruta: Path) -> list[Item]:
@@ -112,8 +114,7 @@ def segmentar_documento(ruta: Path) -> list[Item]:
                     puntos_obtenidos=pts_obt,
                 )
             )
-            _, incisos = _partir_incisos(bloque)
-            for inc_id, inc_texto in incisos:
+            for inc_id, inc_texto in _partir_incisos(bloque):
                 items.append(
                     Item(
                         id=f"{preg_id}{inc_id}",
@@ -131,17 +132,16 @@ def segmentar_documento(ruta: Path) -> list[Item]:
     if tipo == "tarea":
         for m, bloque in _bloques_h2(cuerpo, _PATRON_EJERCICIO):
             n = m.group(1)
-            comun, incisos = _partir_incisos(bloque)
+            incisos = _partir_incisos(bloque)
             if incisos:
                 for inc_id, inc_texto in incisos:
-                    texto_inc = f"{comun}\n{inc_texto}".strip() if comun else inc_texto
                     items.append(
                         Item(
                             id=f"{doc_id}:{n}{inc_id}",
                             documento_id=doc_id,
                             tipo_doc="tarea",
                             numero=f"{n}{inc_id}",
-                            texto=texto_inc,
+                            texto=inc_texto,
                             padre_id="",
                             fecha=fecha,
                             parcial=parcial,

@@ -5,7 +5,7 @@
 > transcribir, etiquetar y redactar. Los scripts de `ap.py` hacen las cuentas (similitud,
 > estadística, sorteo) para que sean reproducibles y no inventadas.
 
-Versión del protocolo: 3
+Versión del protocolo: 4
 
 ---
 
@@ -82,8 +82,11 @@ Inciso a.
 ...
 ```
 
+- Incisos: usa siempre letras minúsculas (`### a)`, `### b)`), aunque el profesor numere con
+  `(i)`, `(ii)` o `1)`, `2)`.
 - Tareas: igual, pero con `## Ejercicio N`; usa `### a)`, `### b)` solo cuando los incisos
-  sean ejercicios independientes (otros datos u otro objeto).
+  sean ejercicios independientes (otros datos u otro objeto). Por ejemplo, si un ejercicio pide
+  lo mismo para varios sistemas o ecuaciones distintos, cada uno va en su propio `### a)`.
 - Láminas y notas: no se segmentan por pregunta. Basta un resumen de temas y los resultados
   importantes (teoremas, definiciones, ejemplos resueltos) con `## Tema` por sección.
 - Transcribe fielmente: no corrijas ni completes lo que no se lee; marca `[ilegible]`.
