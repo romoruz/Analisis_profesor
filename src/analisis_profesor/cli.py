@@ -17,7 +17,6 @@ from analisis_profesor import __version__
 
 PENDIENTES = {
     "acuerdo": ("Fase 3", "consistencia entre las dos pasadas de etiquetado"),
-    "verificar": ("Fase 1", "ejecuta los bloques `verificacion` de 08_banco.md"),
     "armar": ("Fase 1", "-> entregables/SIMULACROS.md, SOLUCIONES.md, simulacros.tex"),
 }
 
@@ -78,6 +77,10 @@ def main(argv: list[str] | None = None) -> int:
     s_mod.add_argument("--simulaciones", type=int, default=20_000, help="réplicas base (R)")
     s_mod.add_argument("--rejilla", type=int, default=3_000, help="réplicas por punto de malla")
     s_mod.add_argument("--sorteos", type=int, default=5, help="número de simulacros sorteados")
+    s_ver = sub.add_parser("verificar", help="ejecuta los bloques `verificacion` de 08_banco.md")
+    s_ver.add_argument("materia", help="id de la materia en trabajo/<id>/")
+    s_ver.add_argument("--timeout", type=float, default=15.0, help="límite por ejercicio (s)")
+    s_ver.add_argument("--id", dest="ids", action="append", help="solo verificar IDs indicados")
     for nombre, (_fase, ayuda) in PENDIENTES.items():
         s = sub.add_parser(nombre, help=ayuda)
         s.add_argument("args", nargs="*")
@@ -197,6 +200,24 @@ def main(argv: list[str] | None = None) -> int:
                 f"sens=[{p_item['p_min_sensibilidad']:.3f}, {p_item['p_max_sensibilidad']:.3f}]"
             )
         return 0
+    if a.cmd == "verificar":
+        ruta_banco = Path("trabajo") / a.materia / "08_banco.md"
+        if not ruta_banco.is_file():
+            print(f"Error: no existe {ruta_banco}", file=sys.stderr)
+            return 1
+        from analisis_profesor.banco import verificar_banco
+
+        res = verificar_banco(a.materia, timeout_s=a.timeout, ids=a.ids)
+        for item in res["resultados"]:
+            marca = {"ok": "OK", "manual": "MN", "fallo": "XX", "timeout": "TO"}[item["estado"]]
+            print(f"  [{marca}] {item['id']} ({item['arquetipo']}) -> {item['estado']}")
+        print(
+            f"Verificación completada en trabajo/{a.materia}/08_verificacion.json: "
+            f"{res['verificados']}/{res['total']} verificados "
+            f"({res['automaticos_ok']} automáticos OK, {res['manuales']} manuales, "
+            f"{res['automaticos_fallidos']} fallidos)."
+        )
+        return 0 if res["todos_ok"] else 1
     fase, _ = PENDIENTES[a.cmd]
     print(f"PENDIENTE: `{a.cmd}` se implementa en la {fase} (docs/ROADMAP.md). "
           "Mientras tanto, haz este paso a mano según el Anexo C de PROTOCOLO.md.")
