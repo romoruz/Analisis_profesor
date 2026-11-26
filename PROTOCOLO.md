@@ -5,7 +5,7 @@
 > transcribir, etiquetar y redactar. Los scripts de `ap.py` hacen las cuentas (similitud,
 > estadística, sorteo) para que sean reproducibles y no inventadas.
 
-Versión del protocolo: 4
+Versión del protocolo: 5
 
 ---
 
@@ -193,6 +193,8 @@ Para cada arquetipo con probabilidad ≥ 0.2, escribe **al menos 3 ejercicios nu
 ```markdown
 ## B-A-1
 arquetipo: A
+nivel: adaptación
+familia: A-potencial
 basado_en: T4:12
 rasgos: entregables=4, parametro=0, tecnica=1, demostracion=0, algebra=1, casos=1
 enunciado: |
@@ -200,17 +202,23 @@ enunciado: |
 solucion: |
   U(x) = ...
 verificacion: |
-  # Python (sympy/numpy) que hace assert de la solución. Vacío si es una demostración.
+  # Python (sympy/numpy) que hace assert de la solución.
 ```
 
+- `nivel:` indica la distancia al material original (`casi copia`, `adaptación` o `nueva`);
+  es opcional y ayuda a balancear el armado.
+- `familia:` identifica variantes estructuralmente análogas para penalizar que aparezcan en
+  simulacros distintos (opcional; por defecto toma el valor de `basado_en` o el id).
+- En ejercicios puramente demostrativos, escribe `verificacion: manual` en una línea.
 - Varía números y funciones, pero conserva lo que se practica y la redacción del profe.
 - Las variantes deben quedar a ±1 punto de dificultad del objetivo que reporta `07_modelo.json`
   para su arquetipo. Calcula sus rasgos con la misma rúbrica; no "declares" la dificultad.
 - Números limpios, pero no triviales.
 
-Luego corre `python ap.py verificar <id>`. Ejecuta cada bloque `verificacion` y marca el
-ejercicio como verificado o no. Corrige los que fallen. Las demostraciones se revisan
-leyéndolas y se marcan `verificacion: manual`.
+Luego corre `python ap.py verificar <id>`. Ejecuta cada bloque `verificacion` en un
+subproceso con límite de tiempo y marca el ejercicio como verificado o no (`08_verificacion.json`).
+Corrige los que fallen. Las demostraciones se revisan leyéndolas y quedan marcadas con
+`verificacion: manual`.
 
 ## 8. Armado de simulacros [script]
 
