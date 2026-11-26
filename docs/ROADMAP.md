@@ -70,7 +70,7 @@ SD-II, reproduce los resultados de `legacy/`.
         y exámenes.
 
       *Acepta:* con el zip original de SD-II, inventario correcto y las 4 fotos en pendientes.
-- [ ] 1.4 `items`: lee `02_texto/*.md` en el formato del paso 2 (incluye `calificacion_alumno`) y
+- [x] 1.4 `items`: lee `02_texto/*.md` en el formato del paso 2 (incluye `calificacion_alumno`) y
       escribe `03_items.jsonl`. Regla de segmentación (dejar también en `PROTOCOLO.md` §3 al
       hacer la 1.4): "En exámenes el ítem etiquetable es la pregunta (Q3) y sus incisos son
       ítems hijos con padre_id. En tareas, si los incisos son ejercicios independientes (otros

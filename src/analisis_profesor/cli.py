@@ -10,12 +10,12 @@ import json
 import platform
 import shutil
 import sys
+from collections import Counter
 from pathlib import Path
 
 from analisis_profesor import __version__
 
 PENDIENTES = {
-    "items": ("Fase 1", "02_texto/*.md -> 03_items.jsonl"),
     "similitud": ("Fase 1", "03_items.jsonl -> 04_similitud.json"),
     "plantilla-etiquetas": ("Fase 1", "-> 05_etiquetas.csv con una fila por ítem"),
     "acuerdo": ("Fase 3", "consistencia entre las dos pasadas de etiquetado"),
@@ -62,6 +62,8 @@ def main(argv: list[str] | None = None) -> int:
     )
     s_ingesta.add_argument("zip", help="ruta al archivo .zip con el material")
     s_ingesta.add_argument("--materia", "-m", default="", help="id corto para trabajo/<id>/")
+    s_items = sub.add_parser("items", help="02_texto/*.md -> 03_items.jsonl")
+    s_items.add_argument("materia", help="id de la materia en trabajo/<id>/")
     for nombre, (_fase, ayuda) in PENDIENTES.items():
         s = sub.add_parser(nombre, help=ayuda)
         s.add_argument("args", nargs="*")
@@ -88,6 +90,25 @@ def main(argv: list[str] | None = None) -> int:
         docs = ingestar(ruta_zip, materia)
         n_pend = sum(1 for d in docs if d.necesita_transcripcion)
         print(f"Ingesta completa en trabajo/{materia}/: {len(docs)} archivos, {n_pend} pendientes.")
+        return 0
+    if a.cmd == "items":
+        texto_dir = Path("trabajo") / a.materia / "02_texto"
+        if not texto_dir.is_dir():
+            print(f"Error: no existe {texto_dir}", file=sys.stderr)
+            return 1
+        from analisis_profesor.segmentacion import segmentar_carpeta
+
+        items = segmentar_carpeta(a.materia)
+        etiquetables = [it for it in items if not it.padre_id]
+        hijos = [it for it in items if it.padre_id]
+        conteo_etiq = Counter(it.documento_id for it in etiquetables)
+        conteo_hijos = Counter(it.documento_id for it in hijos)
+        for doc_id, n in conteo_etiq.items():
+            extra = f" (+{conteo_hijos[doc_id]} incisos)" if conteo_hijos[doc_id] else ""
+            print(f"  {doc_id}: {n} ítems{extra}")
+        print(
+            f"Total: {len(etiquetables)} ítems etiquetables en trabajo/{a.materia}/03_items.jsonl"
+        )
         return 0
     fase, _ = PENDIENTES[a.cmd]
     print(f"PENDIENTE: `{a.cmd}` se implementa en la {fase} (docs/ROADMAP.md). "
