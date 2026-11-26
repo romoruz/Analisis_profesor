@@ -16,7 +16,6 @@ from pathlib import Path
 from analisis_profesor import __version__
 
 PENDIENTES = {
-    "plantilla-etiquetas": ("Fase 1", "-> 05_etiquetas.csv con una fila por ítem"),
     "acuerdo": ("Fase 3", "consistencia entre las dos pasadas de etiquetado"),
     "dificultad": ("Fase 1", "-> 06_dificultad.json"),
     "modelo": ("Fase 1", "-> 07_modelo.json"),
@@ -65,6 +64,13 @@ def main(argv: list[str] | None = None) -> int:
     s_items.add_argument("materia", help="id de la materia en trabajo/<id>/")
     s_sim = sub.add_parser("similitud", help="03_items.jsonl -> 04_similitud.json")
     s_sim.add_argument("materia", help="id de la materia en trabajo/<id>/")
+    s_plant = sub.add_parser(
+        "plantilla-etiquetas", help="03_items.jsonl -> 05_etiquetas.csv con una fila por ítem"
+    )
+    s_plant.add_argument("materia", help="id de la materia en trabajo/<id>/")
+    s_plant.add_argument(
+        "--sobrescribir", action="store_true", help="regenera todas las filas desde cero"
+    )
     for nombre, (_fase, ayuda) in PENDIENTES.items():
         s = sub.add_parser(nombre, help=ayuda)
         s.add_argument("args", nargs="*")
@@ -127,6 +133,19 @@ def main(argv: list[str] | None = None) -> int:
         for qid, entrada in res["preguntas_examen"].items():
             cand, sim = entrada["mas_parecidos"][0] if entrada["mas_parecidos"] else ("-", 0.0)
             print(f"  {qid} -> {cand} ({sim:.3f}) [{entrada['clasificacion']}]")
+        return 0
+    if a.cmd == "plantilla-etiquetas":
+        ruta_items = Path("trabajo") / a.materia / "03_items.jsonl"
+        if not ruta_items.is_file():
+            print(f"Error: no existe {ruta_items}", file=sys.stderr)
+            return 1
+        from analisis_profesor.config import leer_config_materia
+        from analisis_profesor.etiquetas import generar_plantilla_etiquetas, leer_etiquetas
+
+        ruta_csv = generar_plantilla_etiquetas(a.materia, sobrescribir=a.sobrescribir)
+        rasgos = leer_config_materia(Path("trabajo") / a.materia)["rasgos"]
+        n_filas = len(leer_etiquetas(ruta_csv, rasgos=rasgos))
+        print(f"Plantilla escrita en {ruta_csv} ({n_filas} ítems).")
         return 0
     fase, _ = PENDIENTES[a.cmd]
     print(f"PENDIENTE: `{a.cmd}` se implementa en la {fase} (docs/ROADMAP.md). "
