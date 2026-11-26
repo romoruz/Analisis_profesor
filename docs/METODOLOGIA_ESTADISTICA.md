@@ -52,7 +52,7 @@ donde dos preguntas empujaban el 0.40.
   día tienes calificaciones de un grupo, un Rasch bayesiano jerárquico con priors débiles sí
   sería el modelo correcto para la dificultad empírica.
 
-## 4. Acuerdo de etiquetado (humano contra LLM)
+## 4. Acuerdo de etiquetado (entre pasadas de la IA, y contra el humano si lo hay)
 
 - α de Krippendorff con métrica ordinal para los rasgos, Bloom y DOK; nominal para el arquetipo.
 - Umbrales usuales: ≥ 0.80 confiable; 0.67-0.80 solo para conclusiones tentativas; < 0.67 el

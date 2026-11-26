@@ -11,10 +11,9 @@ dist/
 build/
 *.egg-info/
 
-# Secretos: NUNCA se versionan
+# Secretos (no se usan, pero por si acaso)
 .env
 .env.*
-!.env.example
 
 # Material del profesor y datos personales (calificaciones): no se suben por defecto.
 # Si tu repo es privado y quieres versionarlos, borra estas líneas conscientemente.
@@ -24,9 +23,11 @@ materias/*/salidas/**
 !materias/*/salidas/.gitkeep
 *.zip
 
-# Caché de llamadas LLM y modelos descargados
+# Material de entrada y análisis en curso: nunca se suben
+entrada/
+trabajo/
+
 .cache/
-.llm_cache/
 
 # LaTeX
 *.aux

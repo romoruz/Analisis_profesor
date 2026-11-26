@@ -1,4 +1,5 @@
 @AGENTS.md
 
-Claude Code actúa como orquestador y revisor: revisa PRs contra los criterios de aceptación de
-`docs/ROADMAP.md` y mantiene el roadmap al día.
+Claude Code tiene dos papeles en este repo:
+- Orquestador: revisa PRs contra el "Acepta:" de `docs/ROADMAP.md` y mantiene el roadmap.
+- Analista: si el usuario da un zip de material, sigue `PROTOCOLO.md` (igual que `/analizar` en Antigravity).

@@ -1,67 +1,65 @@
 # Arquitectura
 
-## Principios
+## Dos capas
 
-1. **Núcleo determinista, LLM en los bordes.** Estadística, similitud, armado y verificación son
-   Python puro, reproducible con semilla. El LLM solo extrae, propone etiquetas y genera
-   variantes, y todo lo que produce pasa por validación con Pydantic y, cuando aplica, por
-   revisión humana o un verificador simbólico.
-2. **Agnóstico de proveedor.** Una sola capa `llm.py` sobre LiteLLM. El modelo por rol se elige en
-   `.env`. Funciona con Anthropic, Gemini, OpenAI o modelos locales.
-3. **Agnóstico de materia.** El núcleo no sabe de simplex ni de Poincaré-Bendixson. Lo específico
-   vive en `materias/<m>/`: `materia.yaml`, `verificadores.py` y el banco.
-4. **Archivos planos versionables.** JSONL, CSV y YAML entre fases. Nada de base de datos hasta
-   que haga falta.
-5. **Humano en el ciclo** en tres puntos: inventario y transcripción, arquetipos y muestra de
-   etiquetas.
+| Capa | Quién la ejecuta | Qué hace |
+|---|---|---|
+| **Juicio** (`PROTOCOLO.md`) | La IA del chat: Claude, ChatGPT, Gemini, Antigravity, Claude Code | Transcribir fotos y fórmulas, corregir el inventario, decidir la fuente de cada pregunta, definir arquetipos, etiquetar rasgos, Bloom y DOK, escribir el banco y la guía |
+| **Cálculo** (`ap.py`) | El sandbox de esa misma IA, o tu terminal | Ingesta, segmentación, similitud, dificultad, modelo bayesiano, verificación y armado de simulacros |
+
+La capa de cálculo **no llama a ningún LLM**: es determinista y reproducible con semilla. Así,
+el mismo material da los mismos números en cualquier plataforma, y lo único que varía entre IAs
+es el juicio, que queda escrito en archivos revisables.
+
+## Restricciones de portabilidad
+
+- Python ≥ 3.10, sin instalación: `python ap.py ...` agrega `src/` al path.
+- Núcleo: librería estándar más numpy y scipy. Si faltan, el modo reducido usa Python puro, más
+  lento.
+- Opcionales con respaldo: sklearn (TF-IDF), sympy (fórmulas y verificación), fitz, pypdf o
+  pdfplumber (PDF), pdflatex (PDF de simulacros).
+- Configuración en TOML (`tomllib` es estándar desde 3.11; en 3.10, respaldo a JSON).
+- Nada de red: el sandbox de ChatGPT no tiene internet.
+
+## Carpeta de trabajo de un análisis
+
+```
+trabajo/<id>/                    (ignorado por git)
+  materia.toml                   paso 5.1  (IA)
+  supuestos.md                   pasos 0.3 a 9  (IA)
+  00_crudo/                      paso 1  [script]
+  01_inventario.csv              paso 1  [script] + corrección (IA)
+  02_texto/<doc>.md              paso 1  [script] + transcripción (IA), formato fijo
+  pendientes_transcripcion.txt   paso 1  [script]
+  03_items.jsonl                 paso 3  [script]
+  04_similitud.json              paso 4  [script]
+  05_etiquetas.csv               paso 5  plantilla [script] + llenado (IA)
+  06_dificultad.json             paso 6  [script]
+  07_modelo.json                 paso 6  [script]
+  08_banco.md                    paso 7  (IA) + verificación [script]
+  simulacros.json                paso 8  [script]
+  entregables/                   GUIA_PARCIAL.md (IA), SIMULACROS.md, SOLUCIONES.md, .tex, .pdf
+```
 
 ## Módulos (`src/analisis_profesor/`)
 
-| Módulo | Fase | Entrada → salida |
+| Módulo | Paso | Notas |
 |---|---|---|
-| `esquemas.py` | 0 | Contratos Pydantic (Documento, Item, Relacion, Etiqueta, Prediccion, Simulacro) |
-| `config.py` | 0 | `materia.yaml` → `ConfigMateria` |
-| `llm.py` | 1 | `completar(rol, prompt, esquema, imagenes)` con caché, costo y modo falso |
-| `ingesta.py` | 1 | zip → `datos/crudo`, `documentos.jsonl`, `inventario.csv` |
-| `extraccion.py` | 1 | Documento → Markdown + LaTeX (PyMuPDF, VLM, Marker) |
-| `segmentacion.py` | 1 | texto → `items.jsonl` |
-| `similitud/` (`lexica`, `semantica`, `formulas`, `fusion`) | 2 | items → `relaciones.jsonl` |
-| `temas.py` | 3 | items → `arquetipos_propuestos.yaml` |
-| `etiquetado.py` | 3-4 | items → `etiquetas.jsonl` (k corridas por ítem) |
-| `acuerdo.py` | 4 | etiquetas humano/LLM → α de Krippendorff |
-| `dificultad.py` | 4 | etiquetas → scores, pares, pruebas, robustez |
-| `estadistica.py` | 2-5 | BCa, permutación, Jeffreys, BH, Spearman con IC |
-| `modelo.py` | 5 | config + etiquetas → `prediccion.json`, simulaciones |
-| `backtest.py` | 5 | historial → puntuaciones Brier y log |
-| `banco.py`, `armado.py`, `sorteo.py` | 6 | → `simulacros.json` |
-| `salida/` (plantillas Jinja LaTeX/HTML) | 6-7 | → PDF y reporte |
-| `cli.py` | todas | `ap ...` |
+| `esquemas.py` | todos | dataclasses + JSONL (hecho) |
+| `cli.py` | todos | argparse; `diagnostico` hecho, el resto pendiente |
+| `config.py` | 5-8 | lee `materia.toml` y llena valores por defecto del Anexo A |
+| `ingesta.py`, `pdf.py` | 1 | zip, inventario, extracción con respaldos |
+| `segmentacion.py` | 3 | parser del formato del paso 2 |
+| `similitud.py` | 4 | portado de legacy + TF-IDF en Python puro |
+| `etiquetas.py` | 5 | CSV ↔ Etiqueta, plantilla, convertidor legacy |
+| `estadistica.py` | 6 | BCa, permutación, Jeffreys, Spearman con IC, BH, α de Krippendorff (Python puro con numpy) |
+| `dificultad.py` | 6 | portado de legacy, rasgos configurables |
+| `modelo.py` | 6 | portado de legacy + material y molde calculados desde etiquetas |
+| `banco.py` | 7 | parser de `08_banco.md` y ejecución de verificaciones |
+| `armado.py`, `salida.py` | 8 | banda de dificultad, sorteo balanceado, Markdown y LaTeX |
 
-## Carpeta de una materia
+## Contratos
 
-```
-materias/<m>/
-  materia.yaml          configuración (arquetipos, rasgos, formato, objetivo)
-  verificadores.py      cómo comprobar soluciones del banco (sympy, numérico...)
-  banco/                ejercicios generados y aprobados (yaml)
-  datos/                (no se versiona) crudo/, extraido/
-  salidas/              (no se versiona) *.jsonl, prediccion, simulacros, reporte
-  predicciones/         diario de predicciones congeladas (sí se versiona)
-```
-
-## Capa LLM
-
-- Roles: `extraccion` (visión), `clasificacion`, `etiquetado`, `generacion`, `barato`.
-- Cada llamada recibe un prompt de `prompts/<nombre>.md` (versión en el encabezado) y un
-  `response_format` Pydantic. Si la validación falla, se reintenta con el error y luego se marca
-  para revisión humana.
-- Caché: clave = hash(modelo, versión del prompt, entrada). Volver a correr no cuesta.
-- `salidas/llm_log.jsonl`: rol, modelo, tokens, costo estimado y duración.
-- Pruebas: `AP_LLM_FALSO=1` lee respuestas de `tests/fixtures/llm/<hash>.json`.
-
-## Agentes de código
-
-- Antigravity lee `AGENTS.md` y `.agents/workflows/*.md` (comandos con `/`).
-- Claude Code lee `CLAUDE.md`, que importa `AGENTS.md`.
-- Opcional en la fase 7: servidor MCP que expone `ap` para que cualquier agente lo use como
-  herramienta.
+`esquemas.py` define Documento, Item, Etiqueta, Prediccion y Simulacro. Los formatos que escribe
+la IA (Markdown del paso 2, CSV del paso 5, `08_banco.md`) están especificados en
+`PROTOCOLO.md`. Si cambia uno, cambian los dos, y sube la versión del protocolo.

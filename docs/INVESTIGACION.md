@@ -52,15 +52,15 @@ proyecto.
 - [Nougat](https://arxiv.org/abs/2308.13418) (Meta, ICLR 2024): OCR académico a markup con
   LaTeX. Pesos CC-BY-NC y funciona mejor en inglés.
 
-  Recomendación: un VLM por API para fotos (más simple y mejor con letra a mano), y Marker como
-  opción local.
+  Recomendación: la propia IA del chat transcribe las fotos y los escaneos (es multimodal), y
+  Marker queda como opción local.
 
 **Otras librerías:**
 
 - [BERTopic](https://arxiv.org/abs/2203.05794): embeddings + UMAP + HDBSCAN + c-TF-IDF. Es
   modular, así que se puede usar con embeddings multilingües (fase 3).
-- [LiteLLM](https://docs.litellm.ai/docs/completion/json_mode): una API para todos los
-  proveedores, con salida estructurada Pydantic (fase 1.2).
+- LiteLLM se evaluó para llamar APIs desde el código, pero se descartó: el juicio lo pone la IA
+  del chat que sigue `PROTOCOLO.md`, sin API keys.
 
 ## 3. Literatura
 

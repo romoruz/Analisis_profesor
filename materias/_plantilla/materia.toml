@@ -1,0 +1,30 @@
+# Configuración de una materia. El agente la copia a trabajo/<id>/materia.toml y la llena (PROTOCOLO §5).
+id = "plantilla"
+nombre = "Nombre de la materia"
+profesor = "Apellido"
+semestre = "2026-II"
+
+[objetivo]
+parcial = "P2"
+fecha = ""                       # AAAA-MM-DD
+temas = []                       # ["4.3", "4.4"]; vacío = se deduce del molde
+molde = []                       # ids de exámenes viejos del MISMO parcial, p. ej. ["P2_2020-04-29"]
+ya_examinado_este_semestre = []  # arquetipos que ya salieron (se castigan con rho)
+
+[formato]                        # se deduce de los exámenes molde si se deja vacío
+preguntas = { "4" = 1.0 }        # número de preguntas: peso
+minutos = [75, 100]
+puntos_por_pregunta = []
+
+# Arquetipos: letra = ["descripción", minutos]
+[arquetipos]
+# A = ["Método del potencial: U, equilibrios, estabilidad, retrato fase", 25]
+
+# Rúbrica: nombre = [peso, base, máximo]. Si se omite, se usa la del Anexo A de PROTOCOLO.md.
+[rasgos]
+
+[modelo]                         # hiperparámetros; casi nunca hay que tocarlos
+semilla = 2026
+beta = 6
+suavizado = 0.3
+rho = 0.6

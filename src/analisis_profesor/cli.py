@@ -1,76 +1,82 @@
-"""CLI `ap`. Cada subcomando corresponde a una fase del docs/ROADMAP.md.
+"""CLI de `ap.py`. Un subcomando por paso [script] de PROTOCOLO.md. Solo librería estándar aquí.
 
-Los subcomandos marcados PENDIENTE los implementa el agente de código en su fase.
+Los subcomandos PENDIENTE los implementa el agente de código según docs/ROADMAP.md.
 """
-from pathlib import Path
+from __future__ import annotations
 
-import typer
+import argparse
+import importlib.util
+import json
+import platform
+import shutil
+import sys
 
 from analisis_profesor import __version__
 
-app = typer.Typer(
-    help="Análisis de profesor: ingesta -> reciclaje -> dificultad -> modelo -> simulacros"
-)
+PENDIENTES = {
+    "ingesta": ("Fase 1", "zip -> 00_crudo, 01_inventario.csv, 02_texto/, pendientes"),
+    "items": ("Fase 1", "02_texto/*.md -> 03_items.jsonl"),
+    "similitud": ("Fase 1", "03_items.jsonl -> 04_similitud.json"),
+    "plantilla-etiquetas": ("Fase 1", "-> 05_etiquetas.csv con una fila por ítem"),
+    "acuerdo": ("Fase 3", "consistencia entre las dos pasadas de etiquetado"),
+    "dificultad": ("Fase 1", "-> 06_dificultad.json"),
+    "modelo": ("Fase 1", "-> 07_modelo.json"),
+    "verificar": ("Fase 1", "ejecuta los bloques `verificacion` de 08_banco.md"),
+    "armar": ("Fase 1", "-> entregables/SIMULACROS.md, SOLUCIONES.md, simulacros.tex"),
+}
+
+LIBRERIAS = {  # nombre de import: para qué sirve
+    "numpy": "obligatoria para el modo completo",
+    "scipy": "obligatoria para el modo completo (pruebas, bootstrap)",
+    "sklearn": "opcional: TF-IDF rápido (si falta, versión en Python puro)",
+    "sympy": "opcional: verificación simbólica y similitud de fórmulas",
+    "fitz": "opcional: texto de PDF con PyMuPDF",
+    "pypdf": "opcional: texto de PDF (alternativa)",
+    "pdfplumber": "opcional: texto de PDF (alternativa)",
+}
 
 
-def _pendiente(fase: str) -> None:
-    typer.echo(f"PENDIENTE: se implementa en la {fase} (ver docs/ROADMAP.md)")
-    raise typer.Exit(code=2)
+def diagnostico() -> dict:
+    libs = {n: importlib.util.find_spec(n) is not None for n in LIBRERIAS}
+    pdf = [n for n in ("fitz", "pypdf", "pdfplumber") if libs[n]]
+    herramientas = {h: shutil.which(h) is not None for h in ("pdftotext", "pdflatex")}
+    modo = "completo" if libs["numpy"] and libs["scipy"] else "reducido"
+    return {
+        "version_kit": __version__,
+        "python": platform.python_version(),
+        "python_ok": sys.version_info >= (3, 10),
+        "librerias": libs,
+        "herramientas": herramientas,
+        "lector_pdf": pdf[0] if pdf else ("pdftotext" if herramientas["pdftotext"] else None),
+        "modo": modo,
+    }
 
 
-@app.command()
-def version() -> None:
-    """Muestra la versión."""
-    typer.echo(__version__)
+def main(argv: list[str] | None = None) -> int:
+    p = argparse.ArgumentParser(prog="ap.py", description="Kit de análisis de profesor")
+    sub = p.add_subparsers(dest="cmd", required=True)
+    sub.add_parser("version")
+    sub.add_parser("diagnostico", help="qué modo del PROTOCOLO se puede usar aquí")
+    for nombre, (_fase, ayuda) in PENDIENTES.items():
+        s = sub.add_parser(nombre, help=ayuda)
+        s.add_argument("args", nargs="*")
+    a = p.parse_args(argv)
 
-
-@app.command()
-def nueva(materia: str) -> None:
-    """Crea materias/<materia> a partir de materias/_plantilla."""
-    _pendiente("Fase 0")
-
-
-@app.command()
-def ingesta(materia: str, zip_path: Path = typer.Option(None, "--zip")) -> None:
-    """Descomprime el .zip, inventaría, extrae texto/LaTeX y segmenta en ítems."""
-    _pendiente("Fase 1")
-
-
-@app.command()
-def reciclaje(materia: str) -> None:
-    """Similitud léxica + semántica + de fórmulas, con línea base nula."""
-    _pendiente("Fase 2")
-
-
-@app.command()
-def etiquetar(materia: str) -> None:
-    """Arquetipos, rasgos de dificultad, Bloom/DOK (LLM + revisión humana)."""
-    _pendiente("Fases 3-4")
-
-
-@app.command()
-def dificultad(materia: str) -> None:
-    """Score de dificultad, comparación tarea vs examen con pruebas e intervalos."""
-    _pendiente("Fase 4")
-
-
-@app.command()
-def modelo(materia: str, parcial: str) -> None:
-    """Probabilidad por arquetipo + backtesting."""
-    _pendiente("Fase 5")
-
-
-@app.command()
-def simulacros(materia: str, parcial: str, n: int = 5) -> None:
-    """Genera, verifica y arma n simulacros (LaTeX/PDF)."""
-    _pendiente("Fase 6")
-
-
-@app.command()
-def todo(materia: str, parcial: str) -> None:
-    """Corre todas las fases en orden."""
-    _pendiente("Fase 7")
+    if a.cmd == "version":
+        print(__version__)
+        return 0
+    if a.cmd == "diagnostico":
+        d = diagnostico()
+        print(json.dumps(d, indent=2, ensure_ascii=False))
+        print(f"\nModo del PROTOCOLO: {d['modo'].upper()}")
+        if not d["lector_pdf"]:
+            print("Sin lector de PDF: transcribe los PDFs mirándolos (paso 2).")
+        return 0
+    fase, _ = PENDIENTES[a.cmd]
+    print(f"PENDIENTE: `{a.cmd}` se implementa en la {fase} (docs/ROADMAP.md). "
+          "Mientras tanto, haz este paso a mano según el Anexo C de PROTOCOLO.md.")
+    return 2
 
 
 if __name__ == "__main__":
-    app()
+    sys.exit(main())

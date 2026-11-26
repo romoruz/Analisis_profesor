@@ -1,128 +1,122 @@
-"""Contratos de datos entre fases. TODA fase lee y escribe estos modelos (JSONL en salidas/).
+"""Contratos de datos entre pasos del PROTOCOLO. Solo librería estándar (corre en un sandbox).
 
 Regla para agentes: no cambies un campo existente sin actualizar docs/ARQUITECTURA.md y los tests;
-agregar campos opcionales sí está permitido.
+agregar campos opcionales (con valor por defecto) sí está permitido.
 
-Flujo:  Documento -> Item (pregunta/ejercicio/inciso) -> Etiqueta (arquetipo, rasgos, Bloom/DOK)
-        -> Relacion (reciclaje) -> Prediccion (prob. por arquetipo) -> Simulacro.
+Archivos en trabajo/<materia>/:
+  01_inventario.csv -> Documento     03_items.jsonl -> Item     05_etiquetas.csv -> Etiqueta
+  07_modelo.json -> Prediccion       simulacros.json -> Simulacro
 """
 from __future__ import annotations
 
-from datetime import date
-from enum import Enum
+import json
+from collections.abc import Iterable, Iterator
+from dataclasses import asdict, dataclass, field, fields
+from pathlib import Path
 
-from pydantic import BaseModel, Field
-
-
-class TipoDocumento(str, Enum):
-    examen = "examen"
-    tarea = "tarea"
-    clase = "clase"          # láminas / presentaciones del profe
-    notas = "notas"          # apuntes (del profe o del alumno)
-    temario = "temario"
-    pauta = "pauta"          # solución oficial
+TIPOS_DOCUMENTO = ("examen", "tarea", "clase", "notas", "temario", "pauta", "otro")
+NIVELES_RECICLAJE = ("casi copia", "adaptación", "nueva")
+BLOOM = ("recordar", "comprender", "aplicar", "analizar", "evaluar", "crear")
 
 
-class Documento(BaseModel):
-    id: str                                  # p. ej. "P2_2026-05-04"
-    materia: str
-    tipo: TipoDocumento
-    archivo: str                             # ruta relativa dentro de materias/<m>/datos
-    fecha: date | None = None
-    parcial: str | None = None               # "P1", "P2", "final"...
-    semestre: str | None = None              # "2026-II"
-    profesor: str | None = None
-    metodo_extraccion: str = ""              # "pymupdf" | "vlm:<modelo>" | "marker" | "manual"
-    revisado_por_humano: bool = False
-    hash_sha256: str = ""                    # para detectar duplicados y cambios
+def _en(valor, opciones, campo):
+    if valor not in opciones and valor not in ("", None):
+        raise ValueError(f"{campo}={valor!r} no está en {opciones}")
 
 
-class Item(BaseModel):
-    """Unidad mínima comparable: una pregunta de examen, un ejercicio o un inciso de tarea."""
-    id: str                                  # "P2_2026-05-04:Q3" o "T4:3a"
+@dataclass
+class Documento:
+    id: str                         # "P2_2026-05-04"
+    archivo: str                    # ruta relativa dentro de 00_crudo/
+    tipo: str = "otro"
+    fecha: str = ""                 # AAAA-MM-DD
+    parcial: str = ""               # "P1", "P2", "final"
+    metodo_texto: str = ""          # "pymupdf" | "pypdf" | "pdftotext" | "transcrito" | ""
+    necesita_transcripcion: bool = False
+    sha256: str = ""
+    notas: str = ""
+
+    def __post_init__(self):
+        _en(self.tipo, TIPOS_DOCUMENTO, "tipo")
+
+
+@dataclass
+class Item:
+    """Unidad comparable: pregunta de examen, ejercicio o inciso de tarea, sección de clase."""
+    id: str                         # "P2_2026-05-04:Q3", "T4:3a"
     documento_id: str
-    numero: str                              # "3", "3a"
-    padre_id: str | None = None              # el ejercicio al que pertenece un inciso
-    texto: str                               # texto plano normalizado
-    latex: str = ""                          # fórmulas en LaTeX, si se extrajeron
+    tipo_doc: str
+    numero: str                     # "3", "3a"
+    texto: str
+    padre_id: str = ""
+    fecha: str = ""
+    parcial: str = ""
     puntos_max: float | None = None
-    puntos_obtenidos: float | None = None    # calificación del alumno, si la hay (dato personal)
-    examinable: bool = True
+    puntos_obtenidos: float | None = None   # dato personal: no sale de trabajo/
+
+    def __post_init__(self):
+        _en(self.tipo_doc, TIPOS_DOCUMENTO, "tipo_doc")
 
 
-class NivelReciclaje(str, Enum):
-    copia = "casi copia"
-    adaptacion = "adaptación"
-    nueva = "nueva"
-
-
-class Relacion(BaseModel):
-    """Resultado de fase 2: qué tanto se parece un ítem a otro anterior."""
+@dataclass
+class Etiqueta:
     item_id: str
-    candidato_id: str
-    sim_lexica: float | None = None          # TF-IDF char/word, MinHash
-    sim_semantica: float | None = None       # embeddings
-    sim_formulas: float | None = None        # LaTeX/sympy normalizado
-    sim_fusion: float
-    p_valor_nulo: float | None = None        # contra distribución de pares no relacionados
-    nivel: NivelReciclaje
-    confirmado_por_humano: bool | None = None
+    arquetipo: str = ""
+    fuente: str = ""
+    nivel: str = ""
+    rasgos: dict[str, int] = field(default_factory=dict)
+    bloom: str = ""
+    dok: int | None = None
+    minutos: float | None = None
+    pasada: int = 1                 # 1 o 2: doble etiquetado para medir consistencia
+
+    def __post_init__(self):
+        _en(self.nivel, NIVELES_RECICLAJE, "nivel")
+        _en(self.bloom, BLOOM, "bloom")
+        if self.dok is not None and not 1 <= self.dok <= 4:
+            raise ValueError(f"dok={self.dok} fuera de 1-4")
 
 
-class Bloom(str, Enum):
-    recordar = "recordar"
-    comprender = "comprender"
-    aplicar = "aplicar"
-    analizar = "analizar"
-    evaluar = "evaluar"
-    crear = "crear"
-
-
-class Etiqueta(BaseModel):
-    """Resultado de fases 3-4. Una por (item, etiquetador, corrida) para poder medir acuerdo."""
-    item_id: str
-    etiquetador: str                         # "humano:<iniciales>" | "llm:<modelo>"
-    corrida: int = 0
-    arquetipo: str | None = None
-    rasgos: dict[str, int] = Field(default_factory=dict)   # rasgos de dificultad de la materia
-    bloom: Bloom | None = None
-    dok: int | None = Field(default=None, ge=1, le=4)      # Webb Depth of Knowledge
-    stein: int | None = Field(default=None, ge=1, le=4)    # demanda cognitiva (matemáticas)
-    minutos_estimados: float | None = None
-    fuente_id: str | None = None             # ítem de tarea/clase/examen del que sale
-    justificacion: str = ""
-    version_prompt: str = ""
-
-
-class Prediccion(BaseModel):
-    """Resultado de fase 5 para un parcial objetivo."""
-    materia: str
-    parcial: str
+@dataclass
+class Prediccion:
     arquetipo: str
     p_media: float
-    p_q05: float                              # intervalo creíble 90 %
+    p_q05: float
     p_q95: float
-    p_min_sensibilidad: float | None = None   # mín/máx sobre la rejilla de hiperparámetros
+    p_min_sensibilidad: float | None = None
     p_max_sensibilidad: float | None = None
-    modelo: str = ""                          # nombre + versión del modelo
-    fecha_emision: date | None = None         # se congela ANTES del examen (diario de predicciones)
 
 
-class PreguntaSimulacro(BaseModel):
+@dataclass
+class PreguntaSimulacro:
     arquetipo: str
-    item_banco_id: str
-    enunciado_latex: str
+    banco_id: str
     puntos: float
-    dificultad_objetivo: float
     dificultad: float
     verificado: bool
-    metodo_verificacion: str = ""             # "sympy", "numérico", "revisión humana"
 
 
-class Simulacro(BaseModel):
-    materia: str
-    parcial: str
+@dataclass
+class Simulacro:
     numero: int
     semilla: int
     preguntas: list[PreguntaSimulacro]
     dificultad_total: float
+
+
+def escribir_jsonl(ruta: Path, objetos: Iterable) -> int:
+    n = 0
+    with open(ruta, "w", encoding="utf-8") as f:
+        for o in objetos:
+            f.write(json.dumps(asdict(o), ensure_ascii=False) + "\n")
+            n += 1
+    return n
+
+
+def leer_jsonl(ruta: Path, clase) -> Iterator:
+    nombres = {f.name for f in fields(clase)}
+    with open(ruta, encoding="utf-8") as f:
+        for linea in f:
+            if linea.strip():
+                d = json.loads(linea)
+                yield clase(**{k: v for k, v in d.items() if k in nombres})

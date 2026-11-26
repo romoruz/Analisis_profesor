@@ -1,46 +1,46 @@
-# Reglas para agentes de código
+# Reglas para agentes
 
-Lo leen Antigravity (`AGENTS.md`), Claude Code (vía `CLAUDE.md`) y cualquier otro agente.
-El plan está en `docs/ROADMAP.md`; los contratos de datos, en `src/analisis_profesor/esquemas.py`.
+Este repo tiene **dos** usos y un agente debe saber en cuál está:
 
-## Roles
+- **Analizar material** (alguien te da un zip y quiere simulacros): sigue `PROTOCOLO.md`. No
+  modifiques el código; trabaja dentro de `trabajo/<id>/`.
+- **Desarrollar el kit** (te piden una tarea del roadmap): sigue el resto de este archivo.
 
-- **Implementador** (Antigravity u otro agente en la laptop): toma UNA tarea del roadmap a la vez,
-  la implementa en su rama, corre las pruebas, hace commit y push, y abre el PR.
-- **Orquestador / revisor** (Claude Code): revisa cada PR contra los criterios de aceptación de
-  su tarea, pide cambios, actualiza el roadmap. No se hace merge sin su revisión y la del dueño.
-- **Dueño** (el humano): aprueba arquetipos y etiquetas, revisa transcripciones y hace merge.
+## Roles en el desarrollo
 
-## Flujo de trabajo
+- **Implementador** (Antigravity en la laptop del dueño): toma UNA tarea de `docs/ROADMAP.md`,
+  la implementa en su rama, corre las pruebas, hace commit y push, y abre un PR.
+- **Orquestador y revisor** (Claude Code): revisa cada PR contra el "Acepta:" de su tarea,
+  pide cambios y mantiene el roadmap.
+- **Dueño** (humano): elige la tarea, prueba en los chats y hace merge.
 
-1. Rama por tarea: `fase<N>/<tarea-corta>` desde `main` actualizado (p. ej. `fase1/extraccion-pdf`).
-2. Antes de cada commit: `ruff check src tests` y `pytest`. Si algo falla, no se hace commit.
-3. Commits pequeños en español, en imperativo: `Agrega segmentador de preguntas`.
-4. Un PR por tarea. En la descripción va qué criterio de aceptación se cumple y cómo se verificó
-   (comando y salida).
-5. Al terminar la tarea, marca su casilla en `docs/ROADMAP.md` dentro del mismo PR.
+## Flujo
+
+1. Rama `fase<N>/<tarea-corta>` desde `main` actualizado.
+2. Antes de cada commit: `ruff check src tests ap.py` y `pytest`. Si falla, no hay commit.
+3. Commits pequeños en español, en imperativo.
+4. Un PR por tarea. La descripción dice qué criterio cumple y cómo se verificó (comando y
+   salida).
+5. Marca la casilla de la tarea en `docs/ROADMAP.md` en el mismo PR.
 
 ## Reglas duras
 
-- **Nunca** subas `.env`, API keys, ni nada de `materias/*/datos` o `materias/*/salidas`. Las
-  calificaciones del alumno son datos personales.
-- **Nunca** cambies un campo existente de `esquemas.py` sin actualizar `docs/ARQUITECTURA.md` y
-  los tests. Agregar campos opcionales sí se vale.
-- **No** toques `legacy/`: es la referencia para las pruebas de regresión.
-- Todo lo aleatorio lleva semilla y es reproducible. Mismo input + misma semilla = mismo output.
-- Toda llamada a LLM pasa por `analisis_profesor/llm.py` (capa única con caché, registro de
-  costo y salida validada con Pydantic). Nada de clientes de proveedor sueltos en otros módulos.
-- Los prompts viven en `prompts/*.md` con versión en el encabezado; el código los carga, no los
-  escribe en línea.
-- Ningún número estadístico se reporta sin su incertidumbre (intervalo, rango de sensibilidad o
-  tamaño de muestra). Ver `docs/METODOLOGIA_ESTADISTICA.md`.
-- Las pruebas no llaman a APIs reales: usa el modo `AP_LLM_FALSO=1` (respuestas grabadas en
-  `tests/fixtures/llm/`).
-- Si una tarea es ambigua o choca con estas reglas, detente y deja la pregunta en el PR en vez de
-  inventar.
+- **Portabilidad:** en `src/analisis_profesor/` solo se importa a nivel módulo la librería
+  estándar, numpy y scipy. Cualquier otra librería (sklearn, sympy, fitz...) se importa dentro
+  de una función con `try/except ImportError` y tiene respaldo o un mensaje claro. La CI tiene
+  un trabajo sin nada instalado que debe pasar.
+- **Sin LLM en el código:** nada de SDKs de OpenAI, Anthropic o Gemini, ni API keys. El juicio lo
+  pone la IA que sigue el protocolo.
+- **No toques `legacy/`:** es la referencia de las pruebas de regresión.
+- **Reproducible:** todo lo aleatorio con semilla. Mismo input + misma semilla = mismo output.
+- **Formatos:** si cambias un formato que escribe la IA (Markdown del paso 2, CSV del paso 5,
+  `08_banco.md`), actualiza `PROTOCOLO.md`, sube su versión y actualiza los fixtures.
+- **Datos:** nunca subas `entrada/`, `trabajo/`, zips ni calificaciones. Los fixtures de la CI
+  son inventados (`tests/fixtures/mini`).
+- **Incertidumbre:** ningún número estadístico sale de un script sin su intervalo, rango o n.
+- Si la tarea es ambigua, pregunta en el PR y detente. No inventes.
 
 ## Estilo
 
-Python ≥ 3.11, tipado, funciones puras donde se pueda, nombres en español como en `legacy/`.
-Módulos cortos; la lógica de una materia va en `materias/<m>/` (configuración y verificadores),
-nunca en el núcleo.
+Python ≥ 3.10, tipado, funciones puras, nombres en español como en `legacy/`, líneas ≤ 100 y
+módulos cortos.
