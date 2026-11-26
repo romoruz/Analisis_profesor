@@ -39,3 +39,6 @@ select = ["E", "F", "I", "B", "UP", "SIM"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+markers = [
+  "real: pruebas con el material real de SD-II en entrada/estudio_parciales.zip (se saltan si no existe)",
+]

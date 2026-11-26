@@ -55,7 +55,7 @@ SD-II, reproduce los resultados de `legacy/`.
       (b) "sandbox mínimo", solo numpy y scipy; (c) "Python puro", sin nada, que corre
       `ap.py diagnostico` y `ap.py items` con `python -I`.
       *Acepta:* los tres en verde en el PR.
-- [ ] 1.2 **Fixtures**:
+- [x] 1.2 **Fixtures**:
       - `tests/fixtures/mini/`: un curso **inventado** con 2 exámenes, 2 tareas y 1 lámina, ya en
         el formato del paso 2, más su `05_etiquetas.csv`. Se versiona y lo usa la CI.
       - SD-II real: pruebas marcadas `@pytest.mark.real` que leen `entrada/sd2/` (ignorado por
