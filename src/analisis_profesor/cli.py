@@ -17,7 +17,6 @@ from analisis_profesor import __version__
 
 PENDIENTES = {
     "acuerdo": ("Fase 3", "consistencia entre las dos pasadas de etiquetado"),
-    "dificultad": ("Fase 1", "-> 06_dificultad.json"),
     "modelo": ("Fase 1", "-> 07_modelo.json"),
     "verificar": ("Fase 1", "ejecuta los bloques `verificacion` de 08_banco.md"),
     "armar": ("Fase 1", "-> entregables/SIMULACROS.md, SOLUCIONES.md, simulacros.tex"),
@@ -71,6 +70,9 @@ def main(argv: list[str] | None = None) -> int:
     s_plant.add_argument(
         "--sobrescribir", action="store_true", help="regenera todas las filas desde cero"
     )
+    s_dif = sub.add_parser("dificultad", help="05_etiquetas.csv -> 06_dificultad.json")
+    s_dif.add_argument("materia", help="id de la materia en trabajo/<id>/")
+    s_dif.add_argument("--semilla", type=int, default=2026, help="semilla bootstrap/permutación")
     for nombre, (_fase, ayuda) in PENDIENTES.items():
         s = sub.add_parser(nombre, help=ayuda)
         s.add_argument("args", nargs="*")
@@ -146,6 +148,22 @@ def main(argv: list[str] | None = None) -> int:
         rasgos = leer_config_materia(Path("trabajo") / a.materia)["rasgos"]
         n_filas = len(leer_etiquetas(ruta_csv, rasgos=rasgos))
         print(f"Plantilla escrita en {ruta_csv} ({n_filas} ítems).")
+        return 0
+    if a.cmd == "dificultad":
+        ruta_etiq = Path("trabajo") / a.materia / "05_etiquetas.csv"
+        if not ruta_etiq.is_file():
+            print(f"Error: no existe {ruta_etiq}", file=sys.stderr)
+            return 1
+        from analisis_profesor.dificultad import calcular_dificultad
+
+        res = calcular_dificultad(a.materia, semilla=a.semilla)
+        inf = res["alcance_objetivo"]["delta_pares_inferencia"]
+        ic = inf["ic_bca"]
+        print(
+            f"Dificultad calculada en trabajo/{a.materia}/06_dificultad.json "
+            f"(pares en alcance n={inf['n']}, omitidos={inf['n_omitidos']}, "
+            f"delta={inf['media']}, IC BCa={ic}, p_perm={inf['p_permutacion']})."
+        )
         return 0
     fase, _ = PENDIENTES[a.cmd]
     print(f"PENDIENTE: `{a.cmd}` se implementa en la {fase} (docs/ROADMAP.md). "
