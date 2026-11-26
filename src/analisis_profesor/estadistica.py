@@ -147,11 +147,16 @@ def _beta_ppf_puro(q: float, a: float, b: float) -> float:
     return 0.5 * (lo + hi)
 
 
-def _limites_cuantiles_bca(
-    n: int,
+def _aceleracion_desde_influencias(influencias: Sequence[float]) -> float:
+    """Coeficiente de aceleración BCa a partir de influencias empíricas `U_i`."""
+    den = 6.0 * (sum(u * u for u in influencias) ** 1.5)
+    return sum(u**3 for u in influencias) / den if den > 0.0 else 0.0
+
+
+def _cuantiles_bca_desde_aceleracion(
     estimador: float,
     boot_orden: Sequence[float],
-    jk_valores: Sequence[float],
+    a_hat: float,
     nivel: float,
 ) -> tuple[float, float]:
     n_rem = len(boot_orden)
@@ -160,11 +165,6 @@ def _limites_cuantiles_bca(
     pct = (c_lt + c_le) / (2.0 * n_rem)
     eps = 1.0 / (2.0 * n_rem)
     pct = max(eps, min(1.0 - eps, pct))
-
-    jk_bar = sum(jk_valores) / n
-    dif_jk = [jk_bar - v for v in jk_valores]
-    den = 6.0 * (sum(d * d for d in dif_jk) ** 1.5)
-    a_hat = sum(d**3 for d in dif_jk) / den if den > 0.0 else 0.0
 
     nd = NormalDist()
     z0 = nd.inv_cdf(pct)
@@ -177,6 +177,18 @@ def _limites_cuantiles_bca(
         q = defecto if den_q <= 0.0 else nd.cdf(z0 + num / den_q)
         cuantiles.append(max(0.0, min(1.0, q)))
     return cuantiles[0], cuantiles[1]
+
+
+def _limites_cuantiles_bca(
+    n: int,
+    estimador: float,
+    boot_orden: Sequence[float],
+    jk_valores: Sequence[float],
+    nivel: float,
+) -> tuple[float, float]:
+    jk_bar = sum(jk_valores) / n
+    a_hat = _aceleracion_desde_influencias([jk_bar - v for v in jk_valores])
+    return _cuantiles_bca_desde_aceleracion(estimador, boot_orden, a_hat, nivel)
 
 
 def _bca_desde_remuestras_puro(
@@ -298,12 +310,15 @@ def bootstrap_diferencia_medias(
     *,
     nivel: float = 0.95,
     n_remuestras: int = 5000,
+    n_permutaciones: int = 5000,
     semilla: int = 2026,
     usar_numpy: bool | None = None,
 ) -> dict:
-    """Intervalo de confianza bootstrap para `media(grupo_a) - media(grupo_b)`.
+    """Intervalos bootstrap (percentil y BCa) y $p$ de permutación para `media(A) - media(B)`.
 
-    Fuente: `docs/METODOLOGIA_ESTADISTICA.md` §2 (comparación global entre grupos).
+    Fuente de la fórmula BCa de dos muestras: Efron y Tibshirani (1993, cap. 15, ec. 15.36);
+    contrastable contra `scipy.stats.bootstrap((a, b), ..., method="BCa")`. Prueba de
+    permutación bilateral de dos muestras (Good, 2005); `docs/METODOLOGIA_ESTADISTICA.md` §2.
     """
     a = [float(x) for x in grupo_a]
     b = [float(x) for x in grupo_b]
@@ -314,36 +329,77 @@ def bootstrap_diferencia_medias(
             "n_b": nb,
             "diferencia": 0.0,
             "ic_bootstrap": [0.0, 0.0],
+            "ic_bca": [0.0, 0.0],
+            "p_permutacion": 1.0,
             "nivel": nivel,
             "n_remuestras": n_remuestras,
+            "n_permutaciones": n_permutaciones,
             "exploratorio": True,
         }
-    dif_obs = (sum(a) / na) - (sum(b) / nb)
+    ma_obs = sum(a) / na
+    mb_obs = sum(b) / nb
+    dif_obs = ma_obs - mb_obs
     alpha = (1.0 - nivel) / 2.0
+
+    # Aceleración jackknife de dos muestras (Efron & Tibshirani, ec. 15.36)
+    influencias = [(x - ma_obs) / na for x in a] + [(mb_obs - y) / nb for y in b]
+    a_hat = _aceleracion_desde_influencias(influencias)
+
     if _hay_numpy(usar_numpy):
         arr_a = np.asarray(a, dtype=float)
         arr_b = np.asarray(b, dtype=float)
         rng = np.random.default_rng(semilla)
         ma = arr_a[rng.integers(0, na, size=(n_remuestras, na))].mean(axis=1)
         mb = arr_b[rng.integers(0, nb, size=(n_remuestras, nb))].mean(axis=1)
-        lo, hi = np.quantile(ma - mb, [alpha, 1.0 - alpha])
+        difs_arr = ma - mb
+        lo, hi = np.quantile(difs_arr, [alpha, 1.0 - alpha])
+        boot_orden = np.sort(difs_arr).tolist()
+        q_lo, q_hi = _cuantiles_bca_desde_aceleracion(dif_obs, boot_orden, a_hat, nivel)
+        bca_lo, bca_hi = np.quantile(difs_arr, [q_lo, q_hi])
+
+        # Permutación bilateral de dos muestras (equivalente en dos muestras a permutar A/B)
+        combinado = np.concatenate([arr_a, arr_b])
+        conteo_perm = 0
+        for _ in range(n_permutaciones):
+            perm = rng.permutation(combinado)
+            dif_p = abs(float(perm[:na].mean() - perm[na:].mean()))
+            if dif_p >= abs(dif_obs) - 1e-12:
+                conteo_perm += 1
     else:
         rng_py = random.Random(semilla)
-        difs = sorted(
+        boot_orden = sorted(
             (sum(a[rng_py.randrange(na)] for _ in range(na)) / na)
             - (sum(b[rng_py.randrange(nb)] for _ in range(nb)) / nb)
             for _ in range(n_remuestras)
         )
-        lo = _cuantil_lineal(difs, alpha)
-        hi = _cuantil_lineal(difs, 1.0 - alpha)
+        lo = _cuantil_lineal(boot_orden, alpha)
+        hi = _cuantil_lineal(boot_orden, 1.0 - alpha)
+        q_lo, q_hi = _cuantiles_bca_desde_aceleracion(dif_obs, boot_orden, a_hat, nivel)
+        bca_lo = _cuantil_lineal(boot_orden, q_lo)
+        bca_hi = _cuantil_lineal(boot_orden, q_hi)
+
+        combinado_l = a + b
+        conteo_perm = 0
+        for _ in range(n_permutaciones):
+            rng_py.shuffle(combinado_l)
+            dif_p = abs((sum(combinado_l[:na]) / na) - (sum(combinado_l[na:]) / nb))
+            if dif_p >= abs(dif_obs) - 1e-12:
+                conteo_perm += 1
+
+    if len(set(a)) <= 1 and len(set(b)) <= 1:
+        bca_lo = bca_hi = dif_obs
+    p_perm = float((conteo_perm + 1) / (n_permutaciones + 1))
 
     return {
         "n_a": na,
         "n_b": nb,
         "diferencia": round(float(dif_obs), 4),
         "ic_bootstrap": [round(float(lo), 4), round(float(hi), 4)],
+        "ic_bca": [round(float(bca_lo), 4), round(float(bca_hi), 4)],
+        "p_permutacion": round(p_perm, 4),
         "nivel": nivel,
         "n_remuestras": n_remuestras,
+        "n_permutaciones": n_permutaciones,
         "exploratorio": na < 10 or nb < 10,
     }
 
@@ -556,6 +612,7 @@ def correlacion_spearman(
             "spearman": 0.0,
             "p_valor": 1.0,
             "ic_bootstrap": [0.0, 0.0],
+            "ic_bca": [0.0, 0.0],
             "nivel_ic": nivel,
             "p_permutacion": 1.0,
             "n_remuestras": 0,
@@ -633,8 +690,17 @@ def correlacion_spearman(
         alpha = (1.0 - nivel) / 2.0
         ic_bajo = _cuantil_lineal(rhos_orden, alpha)
         ic_alto = _cuantil_lineal(rhos_orden, 1.0 - alpha)
+        if n >= 4:
+            jk_rhos = [
+                _rho_simple(vx[:i] + vx[i + 1 :], vy[:i] + vy[i + 1 :]) for i in range(n)
+            ]
+            q_lo, q_hi = _limites_cuantiles_bca(n, rho_obs, rhos_orden, jk_rhos, nivel)
+            bca_bajo = _cuantil_lineal(rhos_orden, q_lo)
+            bca_alto = _cuantil_lineal(rhos_orden, q_hi)
+        else:
+            bca_bajo, bca_alto = ic_bajo, ic_alto
     else:
-        ic_bajo = ic_alto = rho_obs
+        ic_bajo = ic_alto = bca_bajo = bca_alto = rho_obs
 
     p_perm = float((conteo_perm + 1) / (n_permutaciones + 1))
     return {
@@ -642,6 +708,7 @@ def correlacion_spearman(
         "spearman": float(rho_obs),
         "p_valor": float(p_val),
         "ic_bootstrap": [float(ic_bajo), float(ic_alto)],
+        "ic_bca": [float(bca_bajo), float(bca_alto)],
         "nivel_ic": nivel,
         "p_permutacion": float(p_perm),
         "n_remuestras": len(rhos_boot),

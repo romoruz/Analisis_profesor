@@ -167,7 +167,8 @@ def main(argv: list[str] | None = None) -> int:
         print(
             f"Dificultad calculada en trabajo/{a.materia}/06_dificultad.json "
             f"(pares en alcance n={inf['n']}, omitidos={inf['n_omitidos']}, "
-            f"delta={inf['media']}, IC BCa={ic}, p_perm={inf['p_permutacion']})."
+            f"delta={inf['media']}, IC BCa={ic}, p_perm={inf['p_permutacion']}, "
+            f"conclusión={inf['conclusion']})."
         )
         return 0
     if a.cmd == "modelo":

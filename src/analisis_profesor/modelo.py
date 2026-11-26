@@ -131,142 +131,170 @@ def prepara(cfg: Mapping, *, usar_numpy: bool | None = None) -> dict:
     }
 
 
-def _simular_con_detalle(
+def _preparar_contexto_simulacion(
     cfg: Mapping,
-    r_sim: int,
-    rng,
+    *,
     beta: float | None = None,
-    pi: float | None = None,
     rho: float | None = None,
     kappa: float | None = None,
-    guardar: bool = False,
-    *,
-    registrar_theta: bool = False,
-    usar_numpy: bool | None = None,
-):
-    """Motor Monte Carlo de exámenes. Preserva la secuencia exacta de llamadas a `rng`."""
-    usar_np = usar_numpy is not False and np is not None and not isinstance(rng, _RngPuro)
+    usar_np: bool = False,
+) -> dict:
+    """Prepara parámetros vectorizados para `simula` y simulación por bloques."""
     p = prepara(cfg, usar_numpy=usar_np)
     k_lista = p["K"]
-    beta = cfg.get("beta", 6) if beta is None else beta
+    beta_val = cfg.get("beta", 6) if beta is None else beta
     s = cfg.get("suavizado", 0.3)
-    rho = cfg.get("rho", 0.6) if rho is None else rho
-    rot_lista = [rho if k in cfg.get("rotacion", []) else 1.0 for k in k_lista]
+    rho_val = cfg.get("rho", 0.6) if rho is None else rho
+    rot_lista = [rho_val if k in cfg.get("rotacion", []) else 1.0 for k in k_lista]
     rot = np.array(rot_lista, dtype=float) if usar_np else rot_lista
 
     cob = cfg.get("cobertura")
-    kappa = (cob or {}).get("kappa", 0.0) if kappa is None else kappa
+    kappa_val = (cob or {}).get("kappa", 0.0) if kappa is None else kappa
     lo, hi = cfg["ventana"]
 
     if usar_np:
-        alpha_m = beta * p["m"] * rot + s
-        alpha_n = beta * p["n"] * rot + s
+        alpha_m = beta_val * p["m"] * rot + s
+        alpha_n = beta_val * p["n"] * rot + s
         np_probs = p["Np"] / p["Np"].sum()
-        cuenta = np.zeros(len(k_lista))
     else:
-        alpha_m = [beta * m_i * r_i + s for m_i, r_i in zip(p["m"], rot, strict=True)]
-        alpha_n = [beta * n_i * r_i + s for n_i, r_i in zip(p["n"], rot, strict=True)]
+        alpha_m = [beta_val * m_i * r_i + s for m_i, r_i in zip(p["m"], rot, strict=True)]
+        alpha_n = [beta_val * n_i * r_i + s for n_i, r_i in zip(p["n"], rot, strict=True)]
         suma_np = sum(p["Np"])
         np_probs = [val / suma_np for val in p["Np"]]
-        cuenta = [0.0] * len(k_lista)
 
-    ex: list[list[str]] = []
-    q_theta_muestras: list[list[float]] = []
-    acc = 0
-    una_dem = cfg.get("una_demostracion", True)
-    dem_indices = p["dem"]
+    dem_cfg = cfg.get("demostracion", {})
+    return {
+        "p": p,
+        "K": k_lista,
+        "alpha_m": alpha_m,
+        "alpha_n": alpha_n,
+        "np_probs": np_probs,
+        "cob": cob,
+        "kappa": kappa_val,
+        "lo": lo,
+        "hi": hi,
+        "una_dem": cfg.get("una_demostracion", True),
+        "dem": p["dem"],
+        "beta_dem": dem_cfg.get("beta"),
+        "pi_molde": cfg["pi_molde"],
+        "usar_np": usar_np,
+    }
 
-    while acc < r_sim:
-        th_m = rng.dirichlet(alpha_m)
-        th_n = rng.dirichlet(alpha_n) if p["hay_molde"] else th_m
-        p_mol = rng.beta(*cfg["pi_molde"]) if pi is None else pi
-        n_preg = int(rng.choice(p["Nv"], p=np_probs))
 
-        elig: list[int] = []
-        if dem_indices:
-            u_dem = rng.random()
-            q_dem = float(rng.beta(*cfg["demostracion"]["beta"]))
-            tiene_dem = u_dem < q_dem
-        else:
-            q_dem = 0.0
-            tiene_dem = False
-        if tiene_dem:
-            th = th_n if rng.random() < p_mol else th_m
-            if usar_np:
-                w = th[dem_indices]
-                w_norm = w / w.sum()
-            else:
-                w = [th[idx] for idx in dem_indices]
-                sw = sum(w)
-                w_norm = [v / sw for v in w]
-            elig.append(dem_indices[int(rng.choice(len(w), p=w_norm))])
+def _sortear_theta(ctx: Mapping, rng, pi: float | None = None):
+    """Sortea una tupla de parámetros `(th_m, th_n, p_mol)` desde los priors."""
+    th_m = rng.dirichlet(ctx["alpha_m"])
+    th_n = rng.dirichlet(ctx["alpha_n"]) if ctx["p"]["hay_molde"] else th_m
+    p_mol = rng.beta(*ctx["pi_molde"]) if pi is None else pi
+    return th_m, th_n, p_mol
 
-        intentos = 0
-        while len(elig) < n_preg and intentos < 100:
-            intentos += 1
-            th = th_n if rng.random() < p_mol else th_m
-            j = int(rng.choice(len(k_lista), p=th))
-            if j in elig:
-                continue
-            if j in dem_indices and any(e in dem_indices for e in elig) and una_dem:
-                continue
-            elig.append(j)
-        if len(elig) < n_preg:
-            continue
 
-        tiempo_total = (
-            float(p["T"][elig].sum()) if usar_np else sum(p["T"][j] for j in elig)
-        )
-        if not (lo <= tiempo_total <= hi):
-            continue
+def _intentar_examen_bajo_theta(
+    ctx: Mapping,
+    rng,
+    th_m,
+    th_n,
+    p_mol: float,
+    *,
+    q_dem_fijo: float | None = None,
+) -> tuple[list[int] | None, float]:
+    """Intenta sortear un examen aceptado bajo `(th_m, th_n, p_mol)`."""
+    p = ctx["p"]
+    k_lista = ctx["K"]
+    usar_np = ctx["usar_np"]
+    dem_indices = ctx["dem"]
+    una_dem = ctx["una_dem"]
 
-        if cob and rng.random() < kappa:
-            elegidos_k = {k_lista[j] for j in elig}
-            if not all(elegidos_k & set(b) for b in cob["bloques"]):
-                continue
+    n_preg = int(rng.choice(p["Nv"], p=ctx["np_probs"]))
+    elig: list[int] = []
+    if dem_indices:
+        u_dem = rng.random()
+        q_usado = float(rng.beta(*ctx["beta_dem"])) if q_dem_fijo is None else q_dem_fijo
+        tiene_dem = u_dem < q_usado
+    else:
+        q_usado = 0.0
+        tiene_dem = False
 
-        acc += 1
+    if tiene_dem:
+        th = th_n if rng.random() < p_mol else th_m
         if usar_np:
-            cuenta[elig] += 1
+            w = th[dem_indices]
+            w_norm = w / w.sum()
         else:
-            for j in elig:
-                cuenta[j] += 1.0
-        if guardar:
-            ex.append([k_lista[j] for j in elig])
-        if registrar_theta:
-            # Distribución posterior condicional de aparición por pregunta bajo (th_n, th_m, q_dem):
-            if usar_np:
-                th_mix = p_mol * th_n + (1.0 - p_mol) * th_m
-                th_list = th_mix.tolist()
-            else:
-                th_list = [
-                    p_mol * tn + (1.0 - p_mol) * tm
-                    for tn, tm in zip(th_n, th_m, strict=True)
-                ]
-            dem_set_idx = set(dem_indices)
-            sum_dem = sum(th_list[idx] for idx in dem_indices) if dem_indices else 0.0
-            sum_nodem = max(1e-12, 1.0 - sum_dem) if una_dem else 1.0
-            q_k: list[float] = []
-            for idx, th_k in enumerate(th_list):
-                p_sin_res = 1.0 - (1.0 - th_k) ** n_preg
-                if not dem_indices:
-                    q_k.append(p_sin_res)
-                elif idx in dem_set_idx:
-                    w_d = (th_k / sum_dem) if sum_dem > 0.0 else (1.0 / len(dem_indices))
-                    if una_dem:
-                        q_k.append(q_dem * w_d + (1.0 - q_dem) * p_sin_res)
-                    else:
-                        p_no_d_resto = 1.0 - (1.0 - th_k) ** max(0, n_preg - 1)
-                        p_con_dem = w_d + (1.0 - w_d) * p_no_d_resto
-                        q_k.append(q_dem * p_con_dem + (1.0 - q_dem) * p_sin_res)
-                else:
-                    th_nd = th_k / sum_nodem if una_dem else th_k
-                    p_con_res = 1.0 - (1.0 - min(1.0, th_nd)) ** max(0, n_preg - 1)
-                    q_k.append(q_dem * p_con_res + (1.0 - q_dem) * p_sin_res)
-            q_theta_muestras.append(q_k)
+            w = [th[idx] for idx in dem_indices]
+            sw = sum(w)
+            w_norm = [v / sw for v in w]
+        elig.append(dem_indices[int(rng.choice(len(w), p=w_norm))])
 
-    probs = cuenta / r_sim if usar_np else [c / r_sim for c in cuenta]
-    return probs, ex, q_theta_muestras
+    intentos = 0
+    while len(elig) < n_preg and intentos < 100:
+        intentos += 1
+        th = th_n if rng.random() < p_mol else th_m
+        j = int(rng.choice(len(k_lista), p=th))
+        if j in elig:
+            continue
+        if j in dem_indices and any(e in dem_indices for e in elig) and una_dem:
+            continue
+        elig.append(j)
+    if len(elig) < n_preg:
+        return None, q_usado
+
+    tiempo_total = float(p["T"][elig].sum()) if usar_np else sum(p["T"][j] for j in elig)
+    if not (ctx["lo"] <= tiempo_total <= ctx["hi"]):
+        return None, q_usado
+
+    cob = ctx["cob"]
+    if cob and rng.random() < ctx["kappa"]:
+        elegidos_k = {k_lista[j] for j in elig}
+        if not all(elegidos_k & set(b) for b in cob["bloques"]):
+            return None, q_usado
+
+    return elig, q_usado
+
+
+def _simular_bloques_theta(
+    cfg: Mapping,
+    n_bloques: int,
+    tam_bloque: int,
+    rng,
+    *,
+    usar_numpy: bool | None = None,
+) -> list[list[float]]:
+    """Calcula frecuencias condicionales por bloque `(th_m, th_n, p_mol, q_dem)` con rechazo.
+
+    Cada bloque se inicia aceptando conjuntamente `(theta, q_dem, E_1)` mediante el mismo
+    rechazo que `simula` (para muestrear `theta` desde la posterior condicionada a la
+    aceptación de la ventana temporal) y completa `tam_bloque` exámenes aceptados bajo ese
+    `theta` fijo. Esto evita el sesgo de reemplazo/sin ventana que difería > 0.03 de `p_base`.
+    """
+    usar_np = usar_numpy is not False and np is not None and not isinstance(rng, _RngPuro)
+    ctx = _preparar_contexto_simulacion(cfg, usar_np=usar_np)
+    m = len(ctx["K"])
+    max_intentos = max(tam_bloque * 200, 1000)
+    frecuencias: list[list[float]] = []
+
+    for _ in range(n_bloques):
+        elig_1: list[int] | None = None
+        while elig_1 is None:
+            th_m, th_n, p_mol = _sortear_theta(ctx, rng)
+            elig_1, q_bloque = _intentar_examen_bajo_theta(ctx, rng, th_m, th_n, p_mol)
+
+        conteo = [0] * m
+        for j in elig_1:
+            conteo[j] += 1
+        aceptados = 1
+        intentos = 0
+        while aceptados < tam_bloque and intentos < max_intentos:
+            intentos += 1
+            elig, _ = _intentar_examen_bajo_theta(
+                ctx, rng, th_m, th_n, p_mol, q_dem_fijo=q_bloque
+            )
+            if elig is not None:
+                aceptados += 1
+                for j in elig:
+                    conteo[j] += 1
+        frecuencias.append([c / aceptados for c in conteo])
+    return frecuencias
 
 
 def simula(
@@ -284,10 +312,30 @@ def simula(
     Fuente: `legacy/estudio_parciales/nucleo/modelo.py` (`simula`), basado en
     Dirichlet-multinomial conjugado con mezcla Beta (`docs/METODOLOGIA_ESTADISTICA.md` §5;
     Berger, Bernardo y Sun `arXiv:1504.02689` en `docs/INVESTIGACION.md`).
+    Preserva exactamente la secuencia de llamadas a `rng` respecto a `legacy/`.
     """
-    probs, ex, _ = _simular_con_detalle(
-        cfg, R, rng, beta=beta, pi=pi, rho=rho, kappa=kappa, guardar=guardar
-    )
+    usar_np = np is not None and not isinstance(rng, _RngPuro)
+    ctx = _preparar_contexto_simulacion(cfg, beta=beta, rho=rho, kappa=kappa, usar_np=usar_np)
+    k_lista = ctx["K"]
+    cuenta = np.zeros(len(k_lista)) if usar_np else [0.0] * len(k_lista)
+    ex: list[list[str]] = []
+    acc = 0
+
+    while acc < R:
+        th_m, th_n, p_mol = _sortear_theta(ctx, rng, pi=pi)
+        elig, _ = _intentar_examen_bajo_theta(ctx, rng, th_m, th_n, p_mol)
+        if elig is None:
+            continue
+        acc += 1
+        if usar_np:
+            cuenta[elig] += 1
+        else:
+            for j in elig:
+                cuenta[j] += 1.0
+        if guardar:
+            ex.append([k_lista[j] for j in elig])
+
+    probs = cuenta / R if usar_np else [c / R for c in cuenta]
     return probs, ex
 
 
@@ -318,34 +366,44 @@ def corre(
     *,
     usar_numpy: bool | None = None,
     incluir_intervalos: bool = False,
+    n_bloques_ic: int = 800,
+    tam_bloque_ic: int = 25,
 ) -> dict:
-    """Ejecuta simulación base, barrido de rejilla y combinaciones top.
+    """Ejecuta simulación base, barrido de rejilla, intervalos por bloques y combinaciones top.
 
     Fuente: `legacy/estudio_parciales/nucleo/modelo.py` (`corre`) y
-    `docs/METODOLOGIA_ESTADISTICA.md` §5 (cuantiles 5-95 % creíbles y sensibilidad).
+    `docs/METODOLOGIA_ESTADISTICA.md` §5. Cuando `incluir_intervalos=True`, estima
+    `p_q05` y `p_q95` mediante bloques de `tam_bloque_ic` exámenes aceptados por cada
+    sorteo aceptado de `(theta, q_dem)`, reproduciendo el mecanismo exacto con rechazo
+    que produce `p_base` usando un flujo `rng` separado (`semilla + 1`) tras `simula` y
+    `rejilla` para preservar la reproducibilidad exacta de `legacy`.
     """
     usar_np = usar_numpy is not False and np is not None
     rng = _crear_rng(semilla, usar_numpy=usar_np)
     k_lista = list(cfg["arquetipos"])
-    base, ex, q_muestras = _simular_con_detalle(
-        cfg,
-        R,
-        rng,
-        guardar=True,
-        registrar_theta=incluir_intervalos,
-        usar_numpy=usar_np,
-    )
+    base, ex = simula(cfg, R, rng, guardar=True)
     out: dict = {
         "K": k_lista,
         "nombres": {k: cfg["arquetipos"][k][0] for k in k_lista},
         "minutos": {k: cfg["arquetipos"][k][1] for k in k_lista},
         "p_base": {k: round(float(v), 3) for k, v in zip(k_lista, base, strict=True)},
     }
-    if incluir_intervalos and q_muestras:
+    if malla:
+        mn, mx, n_comb = rejilla(cfg, malla, R_rejilla, rng)
+        out["p_min"] = {k: round(float(v), 3) for k, v in zip(k_lista, mn, strict=True)}
+        out["p_max"] = {k: round(float(v), 3) for k, v in zip(k_lista, mx, strict=True)}
+        out["combinaciones_rejilla"] = n_comb
+
+    if incluir_intervalos and n_bloques_ic > 0 and tam_bloque_ic > 0:
+        rng_ic = _crear_rng(semilla + 1, usar_numpy=usar_np)
+        q_muestras = _simular_bloques_theta(
+            cfg, n_bloques_ic, tam_bloque_ic, rng_ic, usar_numpy=usar_np
+        )
         if usar_np:
             arr_q = np.asarray(q_muestras, dtype=float)
             q05 = np.quantile(arr_q, 0.05, axis=0)
             q95 = np.quantile(arr_q, 0.95, axis=0)
+            medias_q = arr_q.mean(axis=0)
         else:
             q05 = [
                 _cuantil_lineal(sorted(fila[j] for fila in q_muestras), 0.05)
@@ -355,8 +413,18 @@ def corre(
                 _cuantil_lineal(sorted(fila[j] for fila in q_muestras), 0.95)
                 for j in range(len(k_lista))
             ]
+            medias_q = [
+                sum(fila[j] for fila in q_muestras) / len(q_muestras)
+                for j in range(len(k_lista))
+            ]
         out["p_q05"] = {k: round(float(v), 3) for k, v in zip(k_lista, q05, strict=True)}
         out["p_q95"] = {k: round(float(v), 3) for k, v in zip(k_lista, q95, strict=True)}
+        out["p_muestras_media"] = {
+            k: round(float(v), 3) for k, v in zip(k_lista, medias_q, strict=True)
+        }
+        out["n_bloques_ic"] = n_bloques_ic
+        out["tam_bloque_ic"] = tam_bloque_ic
+        out["metodo_ic"] = "bloques_rechazo"
 
         dem_arqs_list = list(cfg.get("demostracion", {}).get("arquetipos", []))
         dem_set = set(dem_arqs_list)
@@ -377,12 +445,6 @@ def corre(
             "n_simulaciones": len(ex),
             "ic_simulacion": ic_dem,
         }
-
-    if malla:
-        mn, mx, n_comb = rejilla(cfg, malla, R_rejilla, rng)
-        out["p_min"] = {k: round(float(v), 3) for k, v in zip(k_lista, mn, strict=True)}
-        out["p_max"] = {k: round(float(v), 3) for k, v in zip(k_lista, mx, strict=True)}
-        out["combinaciones_rejilla"] = n_comb
 
     out["combinaciones_top"] = [
         (list(c), round(cnt / len(ex), 3))

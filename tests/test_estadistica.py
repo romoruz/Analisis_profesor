@@ -150,6 +150,48 @@ def test_correlacion_spearman_contra_scipy_y_respaldo():
     assert abs(res_puro["p_valor"] - float(ref.pvalue)) < 1e-9
     assert abs(res_puro["ic_bootstrap"][0] - res_full["ic_bootstrap"][0]) <= 0.15
     assert abs(res_puro["ic_bootstrap"][1] - res_full["ic_bootstrap"][1]) <= 0.15
+    assert res_full["ic_bca"][0] <= res_full["spearman"] <= res_full["ic_bca"][1]
+    assert res_puro["ic_bca"][0] <= res_puro["spearman"] <= res_puro["ic_bca"][1]
+
+
+def test_bootstrap_diferencia_medias_bca_y_permutacion_contra_scipy():
+    from analisis_profesor.estadistica import bootstrap_diferencia_medias
+
+    a = [1.2, 2.5, 3.1, 4.0, 2.8, 5.5, 6.2]
+    b = [0.8, 1.5, 1.9, 2.1, 3.0, 2.4, 3.8, 4.1, 1.7]
+    ref = stats.bootstrap(
+        (np.asarray(a, dtype=float), np.asarray(b, dtype=float)),
+        lambda x, y, axis=-1: np.mean(x, axis=axis) - np.mean(y, axis=axis),
+        n_resamples=5000,
+        confidence_level=0.95,
+        method="BCa",
+        random_state=np.random.default_rng(2026),
+    ).confidence_interval
+
+    res_np = bootstrap_diferencia_medias(
+        a, b, n_remuestras=5000, semilla=2026, usar_numpy=True
+    )
+    res_py = bootstrap_diferencia_medias(
+        a, b, n_remuestras=5000, semilla=2026, usar_numpy=False
+    )
+    assert res_np == bootstrap_diferencia_medias(
+        a, b, n_remuestras=5000, semilla=2026, usar_numpy=True
+    )
+    assert abs(res_np["ic_bca"][0] - float(ref.low)) <= 0.08
+    assert abs(res_np["ic_bca"][1] - float(ref.high)) <= 0.08
+    assert abs(res_py["ic_bca"][0] - float(ref.low)) <= 0.12
+    assert abs(res_py["ic_bca"][1] - float(ref.high)) <= 0.12
+    assert 0.0 < res_np["p_permutacion"] <= 1.0
+    assert abs(res_py["p_permutacion"] - res_np["p_permutacion"]) <= 0.04
+
+    sep = bootstrap_diferencia_medias(
+        [10.0, 11.0, 12.0, 13.0, 14.0, 15.0],
+        [1.0, 2.0, 1.5, 2.5, 3.0, 2.2],
+        n_remuestras=2000,
+        semilla=2026,
+    )
+    assert sep["ic_bca"][0] > 0.0
+    assert sep["p_permutacion"] < 0.01
 
 
 def test_intervalo_jeffreys_contra_scipy_y_cobertura():

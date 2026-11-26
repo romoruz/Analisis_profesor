@@ -156,6 +156,27 @@ def _construir_registros(
     return registros
 
 
+def conclusion_comparacion(
+    ic_bca: Sequence[float] | None,
+    p_permutacion: float | None,
+    *,
+    umbral_p: float = 0.05,
+) -> str:
+    """Clasifica una comparación según su IC BCa y su p-valor de permutación.
+
+    Devuelve ``"distinguible de cero"`` únicamente cuando el intervalo BCa excluye
+    estrictamente el 0 (``lo > 0`` o ``hi < 0``) y ``p_permutacion < umbral_p``;
+    en otro caso devuelve ``"no concluyente"``.
+    """
+    if ic_bca is None or p_permutacion is None or len(ic_bca) != 2:
+        return "no concluyente"
+    lo, hi = float(ic_bca[0]), float(ic_bca[1])
+    excluye_cero = lo > 0.0 or hi < 0.0
+    if excluye_cero and float(p_permutacion) < umbral_p:
+        return "distinguible de cero"
+    return "no concluyente"
+
+
 def calibra(
     registros: Sequence[_RegistroDificultad],
     rasgos_cfg: Mapping[str, tuple[float, int, int]],
@@ -235,9 +256,13 @@ def calibra(
     if not incluir_inferencia:
         return salida
 
-    salida["comparacion_medias"] = bootstrap_diferencia_medias(
+    comp_medias = bootstrap_diferencia_medias(
         se, st, semilla=semilla, usar_numpy=usar_numpy
     )
+    comp_medias["conclusion"] = conclusion_comparacion(
+        comp_medias["ic_bca"], comp_medias["p_permutacion"]
+    )
+    salida["comparacion_medias"] = comp_medias
     if deltas_exactos:
         bca = bootstrap_bca(
             deltas_exactos, n_remuestras=10_000, semilla=semilla, usar_numpy=usar_numpy
@@ -253,21 +278,24 @@ def calibra(
             jackknife_rango = [round(min(jk), 3), round(max(jk), 3)]
         else:
             jackknife_rango = [round(deltas_exactos[0], 3), round(deltas_exactos[0], 3)]
+        ic_bca_rep = [round(v, 3) for v in bca["ic"]]
+        p_perm_rep = round(perm["p_valor"], 4)
         salida["delta_pares_inferencia"] = {
             "n": len(deltas_exactos),
             "n_omitidos": len(pares_omitidos),
             "media": round(sum(deltas_exactos) / len(deltas_exactos), 2),
             "mediana": round(_cuantil_lineal(sorted(deltas_exactos), 0.5), 2),
-            "ic_bca": [round(v, 3) for v in bca["ic"]],
+            "ic_bca": ic_bca_rep,
             "nivel_ic": bca["nivel"],
             "n_remuestras": bca["n_remuestras"],
-            "p_permutacion": round(perm["p_valor"], 4),
+            "p_permutacion": p_perm_rep,
             "p_minimo_alcanzable": perm["p_minimo_alcanzable"],
             "metodo_permutacion": perm["metodo"],
             "wilcoxon_estadistico": wilc["estadistico"],
             "p_wilcoxon": round(wilc["p_valor"], 4),
             "jackknife_rango": jackknife_rango,
             "exploratorio": len(deltas_exactos) < 10,
+            "conclusion": conclusion_comparacion(ic_bca_rep, p_perm_rep),
         }
     else:
         salida["delta_pares_inferencia"] = {
@@ -285,6 +313,7 @@ def calibra(
             "p_wilcoxon": None,
             "jackknife_rango": None,
             "exploratorio": True,
+            "conclusion": "no concluyente",
         }
 
     n_ex = len(examenes)
@@ -431,15 +460,19 @@ def contra_calificaciones(
         usar_numpy=usar_numpy,
         usar_scipy=usar_scipy,
     )
+    ic_bca_rep = [round(v, 3) for v in res["ic_bca"]]
+    p_perm_rep = round(res["p_permutacion"], 4)
     return {
         "n": res["n"],
         "spearman": round(res["spearman"], 3),
         "p_valor": round(res["p_valor"], 3),
         "ic_bootstrap": [round(v, 3) for v in res["ic_bootstrap"]],
+        "ic_bca": ic_bca_rep,
         "nivel_ic": res["nivel_ic"],
-        "p_permutacion": round(res["p_permutacion"], 4),
+        "p_permutacion": p_perm_rep,
         "n_remuestras": res["n_remuestras"],
         "exploratorio": res["exploratorio"],
+        "conclusion": conclusion_comparacion(ic_bca_rep, p_perm_rep),
     }
 
 

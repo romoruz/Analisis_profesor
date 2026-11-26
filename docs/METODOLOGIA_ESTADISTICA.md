@@ -69,9 +69,14 @@ rotación de lo ya preguntado, reserva para demostración y restricciones de for
 
 **Mejoras:**
 
-1. **Intervalos creíbles** de 5 y 95 % por arquetipo, a partir de la distribución de θ
-   simulada. El mín-máx sobre la rejilla es *sensibilidad*, no incertidumbre: se reportan los
-   dos.
+1. **Intervalos creíbles** de 5 y 95 % por arquetipo mediante simulación por bloques con
+   rechazo (`n_bloques_ic = 800` bloques de `tam_bloque_ic = 25` exámenes aceptados por cada
+   sorteo $(\theta_m, \theta_n, p_{\text{mol}}, q_{\text{dem}})$ aceptado bajo el mismo criterio de
+   ventana temporal y cobertura que `p_base`). Una fórmula analítica sin rechazo y con reemplazo
+   difiere $> 0.03$ de `p_base` cuando hay muestreo sin reemplazo y restricciones de duración;
+   agrupar simulaciones bajo el mecanismo exacto garantiza que la media de las frecuencias por
+   bloque coincida con `p_base`. El mín-máx sobre la rejilla es *sensibilidad*, no incertidumbre: se
+   reportan los dos.
 2. **Recencia:** peso `0.5^(antigüedad / vida_media)` en los conteos del molde.
 3. **Jerarquía entre profesores:** `pi_tarea_j ~ Beta(μ·κ, (1 − μ)·κ)` para cada profesor j,
    con μ y κ compartidos. Pooling parcial: un profe con 2 exámenes toma fuerza de los otros.

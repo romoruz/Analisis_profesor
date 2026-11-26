@@ -95,6 +95,14 @@ def test_dificultad_mini_reproducible_y_respaldo_puro(
         assert "p_wilcoxon" in sec["delta_pares_inferencia"]
         assert sec["delta_pares_inferencia"]["exploratorio"] is True
         assert sec["examenes"]["exploratorio"] is True
+        for clave in ("comparacion_medias", "delta_pares_inferencia"):
+            comp = sec[clave]
+            assert comp["conclusion"] in ("distinguible de cero", "no concluyente")
+            assert (comp["conclusion"] == "distinguible de cero") is (
+                comp["ic_bca"] is not None
+                and (comp["ic_bca"][0] > 0.0 or comp["ic_bca"][1] < 0.0)
+                and comp["p_permutacion"] < 0.05
+            )
 
     omit_mini = {
         "n": 1,
@@ -110,6 +118,8 @@ def test_dificultad_mini_reproducible_y_respaldo_puro(
     assert res1["contra_calificaciones"]["n"] == 4
     assert res1["contra_calificaciones"]["exploratorio"] is True
     assert "ic_bootstrap" in res1["contra_calificaciones"]
+    assert "ic_bca" in res1["contra_calificaciones"]
+    assert res1["contra_calificaciones"]["conclusion"] == "no concluyente"
 
     res_puro = calcular_dificultad(
         "mini", raiz_trabajo=raiz_trabajo, semilla=2026, usar_numpy=False, usar_scipy=False
@@ -234,6 +244,51 @@ def test_regresion_legacy_dificultad_sd2(tmp_path: Path):
     assert cal["p_valor"] == ref["contra_calificaciones"]["p_valor"] == 0.061
     assert cal["exploratorio"] is True
     assert cal["ic_bootstrap"][0] <= cal["spearman"] <= cal["ic_bootstrap"][1]
+    assert cal["conclusion"] == "no concluyente"
+    assert res["todo_el_curso"]["delta_pares_inferencia"]["conclusion"] == "no concluyente"
+    assert res["todo_el_curso"]["comparacion_medias"]["conclusion"] == "no concluyente"
+    assert alc["delta_pares_inferencia"]["conclusion"] == "no concluyente"
+    assert alc["comparacion_medias"]["conclusion"] == "no concluyente"
+
+
+def test_conclusion_comparacion_regla_estricta():
+    from analisis_profesor.dificultad import (
+        _construir_registros,
+        calibra,
+        conclusion_comparacion,
+    )
+    from analisis_profesor.esquemas import Etiqueta
+
+    assert conclusion_comparacion([0.1, 1.2], 0.01) == "distinguible de cero"
+    assert conclusion_comparacion([-1.2, -0.1], 0.049) == "distinguible de cero"
+    assert conclusion_comparacion([-0.1, 1.2], 0.001) == "no concluyente"
+    assert conclusion_comparacion([0.1, 1.2], 0.05) == "no concluyente"
+    assert conclusion_comparacion([0.0, 1.2], 0.01) == "no concluyente"
+    assert conclusion_comparacion(None, 0.01) == "no concluyente"
+
+    rasgos = {"r": (1.0, 0, 5)}
+    etiquetas_n10 = [
+        Etiqueta(item_id=f"T1:{i}", arquetipo="A", nivel="", rasgos={"r": 1})
+        for i in range(1, 11)
+    ] + [
+        Etiqueta(
+            item_id=f"P1_2026-01-01:Q{i}",
+            arquetipo="A",
+            fuente=f"T1:{i}",
+            nivel="adaptación",
+            rasgos={"r": 4},
+        )
+        for i in range(1, 11)
+    ]
+    regs_n10 = _construir_registros(etiquetas_n10, rasgos, {})
+    res_n10 = calibra(regs_n10, rasgos, incluir_inferencia=True, semilla=2026)
+    assert res_n10["delta_pares_inferencia"]["conclusion"] == "distinguible de cero"
+    assert res_n10["comparacion_medias"]["conclusion"] == "distinguible de cero"
+
+    # Con n=5, p mínimo alcanzable de permutación por cambio de signo es 2/32 = 0.0625 >= 0.05
+    regs_n5 = _construir_registros(etiquetas_n10[:5] + etiquetas_n10[10:15], rasgos, {})
+    res_n5 = calibra(regs_n5, rasgos, incluir_inferencia=True, semilla=2026)
+    assert res_n5["delta_pares_inferencia"]["conclusion"] == "no concluyente"
 
 
 @pytest.mark.real

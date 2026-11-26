@@ -278,3 +278,38 @@ def test_modelo_sd2_calculado_desde_etiquetas(sd2_dir: Path, tmp_path: Path):
     assert max(diffs.values()) <= 0.08
     for pred in res["predicciones"]:
         assert 0.0 <= pred["p_q05"] <= pred["p_media"] <= pred["p_q95"] <= 1.0
+    for k in res["K"]:
+        assert abs(res["p_muestras_media"][k] - res["p_base"][k]) <= 0.03
+
+
+def test_media_muestras_ic_contra_p_base_mini_y_sd2(mini_dir: Path, tmp_path: Path):
+    from analisis_profesor.modelo import calcular_modelo, corre
+
+    raiz_trabajo = tmp_path / "trabajo"
+    shutil.copytree(mini_dir, raiz_trabajo / "mini")
+    res_mini = calcular_modelo(
+        "mini", raiz_trabajo=raiz_trabajo, semilla=2026, n_simulaciones=20_000, n_rejilla=500
+    )
+    assert "p_muestras_media" in res_mini
+    for k in res_mini["K"]:
+        assert abs(res_mini["p_muestras_media"][k] - res_mini["p_base"][k]) <= 0.03
+        assert 0.0 <= res_mini["p_q05"][k] <= res_mini["p_base"][k] <= res_mini["p_q95"][k] <= 1.0
+
+    ruta_cfg = (
+        RAIZ
+        / "legacy"
+        / "estudio_parciales"
+        / "cursos"
+        / "sistemas_dinamicos_ii"
+        / "src"
+        / "config_parcial3.py"
+    )
+    ns: dict = {}
+    exec(compile(ruta_cfg.read_text(encoding="utf-8"), str(ruta_cfg), "exec"), ns)
+    res_sd2 = corre(
+        ns["CFG"], R=20_000, R_rejilla=0, semilla=2026, malla=None, incluir_intervalos=True
+    )
+    assert "p_muestras_media" in res_sd2
+    for k in res_sd2["K"]:
+        assert abs(res_sd2["p_muestras_media"][k] - res_sd2["p_base"][k]) <= 0.03
+        assert 0.0 <= res_sd2["p_q05"][k] <= res_sd2["p_base"][k] <= res_sd2["p_q95"][k] <= 1.0
