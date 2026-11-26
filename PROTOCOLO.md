@@ -5,7 +5,7 @@
 > transcribir, etiquetar y redactar. Los scripts de `ap.py` hacen las cuentas (similitud,
 > estadística, sorteo) para que sean reproducibles y no inventadas.
 
-Versión del protocolo: 2
+Versión del protocolo: 3
 
 ---
 
@@ -82,7 +82,8 @@ Inciso a.
 ...
 ```
 
-- Tareas: igual, pero con `## Ejercicio N`.
+- Tareas: igual, pero con `## Ejercicio N`; usa `### a)`, `### b)` solo cuando los incisos
+  sean ejercicios independientes (otros datos u otro objeto).
 - Láminas y notas: no se segmentan por pregunta. Basta un resumen de temas y los resultados
   importantes (teoremas, definiciones, ejemplos resueltos) con `## Tema` por sección.
 - Transcribe fielmente: no corrijas ni completes lo que no se lee; marca `[ilegible]`.
@@ -94,6 +95,10 @@ python ap.py items <id>
 ```
 
 Lee `02_texto/*.md` y escribe `03_items.jsonl` (una pregunta, ejercicio o inciso por línea).
+En exámenes el ítem etiquetable es la pregunta (`Q3`) y sus incisos son ítems hijos con
+`padre_id`. En tareas, si los incisos son ejercicios independientes (otros datos u otro
+objeto, marcados con `### a)`), cada inciso es el ítem etiquetable (`T1:2a`); si no, lo es el
+ejercicio.
 También imprime un conteo por documento. **Tú:** compara el conteo con lo que viste; si no
 coincide, arregla los encabezados del `.md` y vuelve a correr.
 

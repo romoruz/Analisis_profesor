@@ -7,7 +7,9 @@ from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[1]
 SDKS_PROHIBIDOS = frozenset({"openai", "anthropic", "google", "genai", "litellm"})
-ARCHIVOS_SOLO_STDLIB = frozenset({"ap.py", "__init__.py", "cli.py", "esquemas.py"})
+ARCHIVOS_SOLO_STDLIB = frozenset(
+    {"ap.py", "__init__.py", "cli.py", "esquemas.py", "segmentacion.py"}
+)
 
 
 def _paquetes_importados(nodo: ast.stmt | ast.AST) -> list[str]:
