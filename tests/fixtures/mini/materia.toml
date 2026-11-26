@@ -1,8 +1,10 @@
 # Curso ficticio inventado para pruebas automatizadas de CI (sin datos reales).
+# Convención: se asume que las tareas se repiten entre semestres, por lo que un examen
+# viejo puede citar un ejercicio de una tarea actual como su `fuente`.
 id = "mini"
 nombre = "Grafos y Redes Discretas"
 profesor = "Vega"
-semestre = "2026-I"
+semestre = "2026-II"
 
 [objetivo]
 parcial = "P1"

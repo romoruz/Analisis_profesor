@@ -43,6 +43,14 @@ def _extraer_items_md(ruta: Path) -> tuple[str, list[str]]:
     assert re.match(r"^# .+ - .+ - \d{4}-\d{2}-\d{2}$", lineas[0]), (
         f"Encabezado inválido en {ruta.name}: {lineas[0]!r}"
     )
+    assert not re.search(r"^\d+\.\s", texto, re.MULTILINE), (
+        f"Usa ### a) en vez de lista numerada en {ruta.name}"
+    )
+    for h3 in re.findall(r"^### .*$", texto, re.MULTILINE):
+        assert re.match(r"^### [a-z]\)\s*$", h3), (
+            f"Subencabezado inválido en {ruta.name}: {h3!r}"
+        )
+
     m_tipo = re.search(r"^tipo:\s*(\S+)\s*$", texto, re.MULTILINE)
     assert m_tipo, f"Falta `tipo:` en {ruta.name}"
     tipo = m_tipo.group(1)
@@ -51,13 +59,30 @@ def _extraer_items_md(ruta: Path) -> tuple[str, list[str]]:
         assert re.search(r"^duracion_min:\s*\d+\s*$", texto, re.MULTILINE), (
             f"Falta `duracion_min:` en {ruta.name}"
         )
-        nums = re.findall(r"^## Pregunta (\d+)\s*\(\d+(?:\.\d+)? puntos\)", texto, re.MULTILINE)
+        nums = re.findall(
+            r"^## Pregunta (\d+)\s*\(\d+(?:\.\d+)? puntos\)\s*$", texto, re.MULTILINE
+        )
         assert nums, f"Sin preguntas válidas en {ruta.name}"
         return tipo, [f"{ruta.stem}:Q{n}" for n in nums]
     if tipo == "tarea":
-        nums = re.findall(r"^## Ejercicio (\d+)\b", texto, re.MULTILINE)
-        assert nums, f"Sin ejercicios válidos en {ruta.name}"
-        return tipo, [f"{ruta.stem}:{n}" for n in nums]
+        ejercicios = list(re.finditer(r"^## Ejercicio (\d+)\b.*$", texto, re.MULTILINE))
+        assert ejercicios, f"Sin ejercicios válidos en {ruta.name}"
+        items: list[str] = []
+        for idx, m in enumerate(ejercicios):
+            fin = ejercicios[idx + 1].start() if idx + 1 < len(ejercicios) else len(texto)
+            bloque = texto[m.end() : fin]
+            n = m.group(1)
+            letras = re.findall(r"^### ([a-z])\)\s*$", bloque, re.MULTILINE)
+            if letras:
+                esperadas = [chr(ord("a") + i) for i in range(len(letras))]
+                assert len(letras) >= 2 and letras == esperadas, (
+                    f"Incisos inválidos en {ruta.name}:{n}"
+                )
+                for letra in letras:
+                    items.append(f"{ruta.stem}:{n}{letra}")
+            else:
+                items.append(f"{ruta.stem}:{n}")
+        return tipo, items
     if tipo == "clase":
         nums = re.findall(r"^## Tema (\d+)\b", texto, re.MULTILINE)
         assert nums, f"Sin temas válidos en {ruta.name}"
@@ -73,6 +98,7 @@ def test_fixture_mini_documentos_paso2(mini_dir: Path):
 
         cfg = tomllib.loads(toml_ruta.read_text(encoding="utf-8"))
         assert cfg["id"] == "mini"
+        assert cfg["semestre"] == "2026-II"
         for seccion in ("objetivo", "formato", "arquetipos", "modelo"):
             assert seccion in cfg, f"Falta [{seccion}] en materia.toml"
         assert 6 <= len(cfg["arquetipos"]) <= 12
@@ -83,14 +109,28 @@ def test_fixture_mini_documentos_paso2(mini_dir: Path):
 
     conteos = {"examen": 0, "tarea": 0, "clase": 0}
     tiene_calificacion = False
+    examen_con_incisos = False
+    tarea_con_incisos = False
     for ruta in archivos_md:
         tipo, _ = _extraer_items_md(ruta)
         conteos[tipo] += 1
-        if tipo == "examen" and "calificacion_alumno:" in ruta.read_text(encoding="utf-8"):
-            tiene_calificacion = True
+        contenido = ruta.read_text(encoding="utf-8")
+        tiene_incisos = bool(
+            re.search(r"^### a\)\s*$", contenido, re.MULTILINE)
+            and re.search(r"^### b\)\s*$", contenido, re.MULTILINE)
+        )
+        if tipo == "examen":
+            if "calificacion_alumno:" in contenido:
+                tiene_calificacion = True
+            if tiene_incisos:
+                examen_con_incisos = True
+        elif tipo == "tarea" and tiene_incisos:
+            tarea_con_incisos = True
 
     assert conteos == {"examen": 2, "tarea": 2, "clase": 1}
     assert tiene_calificacion, "Al menos un examen debe incluir `calificacion_alumno:`"
+    assert examen_con_incisos, "Al menos un examen debe usar incisos ### a), ### b)"
+    assert tarea_con_incisos, "Al menos una tarea debe usar incisos ### a), ### b)"
 
 
 def test_fixture_mini_etiquetas_validas(mini_dir: Path):
@@ -101,6 +141,7 @@ def test_fixture_mini_etiquetas_validas(mini_dir: Path):
         for item_id in ids:
             ids_esperados.add(item_id)
             tipos_por_id[item_id] = tipo
+    assert {"T1:2a", "T1:2b"}.issubset(ids_esperados)
 
     csv_ruta = mini_dir / "05_etiquetas.csv"
     assert csv_ruta.is_file(), "Falta tests/fixtures/mini/05_etiquetas.csv"

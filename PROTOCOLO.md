@@ -5,7 +5,7 @@
 > transcribir, etiquetar y redactar. Los scripts de `ap.py` hacen las cuentas (similitud,
 > estadística, sorteo) para que sean reproducibles y no inventadas.
 
-Versión del protocolo: 1
+Versión del protocolo: 2
 
 ---
 
@@ -116,6 +116,8 @@ de dónde sale. Anótalo en `fuente` y `nivel` del paso 5. Busca sobre todo:
 - **examen ← examen anterior**: la señal más fuerte de reciclaje;
 - **tarea nueva ← tarea vieja**;
 - **preguntas "nuevas"**: salen de la clase o de ningún lado.
+- **Convención para tareas:** se asume que las tareas se repiten entre semestres, por lo que un
+  examen viejo puede citar un ejercicio de una tarea actual como su `fuente`.
 
 ## 5. Arquetipos y etiquetas (tú)
 
