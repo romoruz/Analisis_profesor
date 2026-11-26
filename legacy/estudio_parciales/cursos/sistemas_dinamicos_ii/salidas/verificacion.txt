@@ -1,0 +1,193 @@
+OJO: CONTIENE SOLUCIONES
+
+OK  A-trig1    [A casi copia]
+     U(x) = -sin(x)**2 + cos(x)
+       x* = -3.1416: silla (inestable)
+       x* = -2.0944: centro (estable, no asintótico)
+       x* = +0.0000: silla (inestable)
+       x* = +2.0944: centro (estable, no asintótico)
+OK  A-trig2    [A casi copia]
+     U(x) = (1 - sin(x))*sin(x)
+       x* = -1.5708: centro (estable, no asintótico)
+       x* = +0.5236: silla (inestable)
+       x* = +1.5708: centro (estable, no asintótico)
+       x* = +2.6180: silla (inestable)
+OK  A-trig3    [A casi copia]
+     U(x) = sin(x)**2 - cos(x) - 1/2
+       x* = -3.1416: centro (estable, no asintótico)
+       x* = -2.0944: silla (inestable)
+       x* = +0.0000: centro (estable, no asintótico)
+       x* = +2.0944: silla (inestable)
+OK  A-adap1    [A adaptación]
+     U(x) = x**2*(8 - x**2)/4
+       x* = -2.0000: silla (inestable)
+       x* = +0.0000: centro (estable, no asintótico)
+       x* = +2.0000: silla (inestable)
+OK  A-adap2    [A adaptación]
+     U(x) = x**3*(8 - 3*x)/12
+       x* = +0.0000: cúspide (inestable)
+       x* = +2.0000: silla (inestable)
+OK  A-adap3    [A adaptación]
+     U(x) = x**2*(3*x**2 - 16*x + 18)/12
+       x* = +0.0000: centro (estable, no asintótico)
+       x* = +1.0000: silla (inestable)
+       x* = +3.0000: centro (estable, no asintótico)
+OK  A-adap4    [A adaptación]
+     U(x) = x*(-3*x**4 + 25*x**2 - 60)/15
+       x* = -2.0000: centro (estable, no asintótico)
+       x* = -1.0000: silla (inestable)
+       x* = +1.0000: centro (estable, no asintótico)
+       x* = +2.0000: silla (inestable)
+OK  A-adap5    [A adaptación]
+     U(x) = -sin(x)**2 + 2*cos(x)
+       x* = -3.1416: centro no hiperbólico (estable)
+       x* = +0.0000: silla (inestable)
+OK  B-cc1      [B casi copia]
+     valores críticos de lambda: [-4.0, 4.0]
+       lambda=-5.000: -4.000 centro (estable, no asintótico); -1.000 silla (inestable)
+       lambda=-4.000: -2.000 cúspide (inestable)
+       lambda=+0.000: sin equilibrios
+       lambda=+4.000: +2.000 cúspide (inestable)
+       lambda=+5.000: +1.000 centro (estable, no asintótico); +4.000 silla (inestable)
+OK  B-cc2      [B casi copia]
+     valores críticos de lambda: [-8.0, 8.0]
+       lambda=-9.000: +2.438 centro (estable, no asintótico); +6.562 silla (inestable)
+       lambda=-8.000: +4.000 cúspide (inestable)
+       lambda=+0.000: sin equilibrios
+       lambda=+8.000: -4.000 cúspide (inestable)
+       lambda=+9.000: -6.562 centro (estable, no asintótico); -2.438 silla (inestable)
+OK  B-cc3      [B casi copia]
+     valores críticos de lambda: [1.0]
+       lambda=+0.000: +0.000 centro (estable, no asintótico); +2.000 silla (inestable)
+       lambda=+1.000: +1.000 cúspide (inestable)
+       lambda=+2.000: sin equilibrios
+OK  B-adap1    [B adaptación]
+     valores críticos de lambda: [0.0]
+       lambda=-1.000: +0.000 centro (estable, no asintótico)
+       lambda=+0.000: +0.000 centro no hiperbólico (estable)
+       lambda=+1.000: -1.000 centro (estable, no asintótico); +0.000 silla (inestable); +1.000 centro (estable, no asintótico)
+OK  B-adap2    [B adaptación]
+     valores críticos de lambda: [0.0]
+       lambda=-1.000: +0.000 silla (inestable)
+       lambda=+0.000: +0.000 silla no hiperbólica (inestable)
+       lambda=+1.000: -1.000 silla (inestable); +0.000 centro (estable, no asintótico); +1.000 silla (inestable)
+OK  B-adap3    [B adaptación]
+     valores críticos de lambda: [-1.0, 1.0]
+       lambda=-2.000: -2.000 silla (inestable); -1.000 centro (estable, no asintótico); +1.000 silla (inestable)
+       lambda=-1.000: -1.000 cúspide (inestable); +1.000 silla (inestable)
+       lambda=+0.000: -1.000 silla (inestable); +0.000 centro (estable, no asintótico); +1.000 silla (inestable)
+       lambda=+1.000: -1.000 silla (inestable); +1.000 cúspide (inestable)
+       lambda=+2.000: -1.000 silla (inestable); +1.000 centro (estable, no asintótico); +2.000 silla (inestable)
+OK  C-comp2    [C adaptación]
+       lambda=1: (0,0) nodo inestable; (0,0.5) silla; (2,0) nodo estable
+       lambda=2: (0,0) nodo inestable; (0,1) silla; (2,0) no hiperbólico (det=0)
+       lambda=3: (0,0) nodo inestable; (0,1.5) silla; (1,1) nodo estable; (2,0) silla
+       lambda=4: (0,0) nodo inestable; (0,2) no hiperbólico (det=0); (2,0) silla
+       lambda=5: (0,0) nodo inestable; (0,2.5) nodo estable; (2,0) silla
+OK  C-comp3    [C adaptación]
+       lambda=1.5: (0,0) nodo inestable; (0,0.75) silla; (3,0) nodo estable
+       lambda=3: (0,0) nodo inestable; (0,1.5) silla; (3,0) no hiperbólico (det=0)
+       lambda=4.5: (0,0) nodo inestable; (0,2.25) silla; (1.5,1.5) nodo estable; (3,0) silla
+       lambda=6: (0,0) nodo inestable; (0,3) no hiperbólico (det=0); (3,0) silla
+       lambda=7: (0,0) nodo inestable; (0,3.5) nodo estable; (3,0) silla
+OK  C-dep1     [C nueva]
+       lambda=0.5: (0,0) silla; (0.5,0.5) foco estable; (1,0) silla
+       lambda=1: (0,0) silla; (1,0) no hiperbólico (det=0)
+       lambda=2: (0,0) silla; (1,0) nodo estable
+       interior es foco para lambda < 4/5 y nodo después: True
+OK  C-dep2     [C nueva]
+       lambda=1: (0,0) silla; (1,1) foco estable; (2,0) silla
+       lambda=2: (0,0) silla; (2,0) no hiperbólico (det=0)
+       lambda=3: (0,0) silla; (2,0) nodo estable
+       interior es foco para lambda < 8/5 y nodo después: True
+OK  D-cc1      [D casi copia]
+     r' = r*(1-r**2), theta' = 2  (comprobado: True)
+       linealización en el origen: [[1, -2], [2, 1]], valores propios [1 - 2*I, 1 + 2*I]
+       desde r=0.90: r(60)=1.0000
+       desde r=1.10: r(60)=1.0000
+OK  D-cc9      [D casi copia]
+     r' = r*(9-r**2), theta' = 1  (comprobado: True)
+       linealización en el origen: [[9, -1], [1, 9]], valores propios [9 - I, 9 + I]
+       desde r=2.70: r(60)=3.0000
+       desde r=3.30: r(60)=3.0000
+OK  D-cc4      [D casi copia]
+     r' = r*(4-r**2), theta' = -3  (comprobado: True)
+       linealización en el origen: [[4, 3], [-3, 4]], valores propios [4 - 3*I, 4 + 3*I]
+       desde r=1.80: r(60)=2.0000
+       desde r=2.20: r(60)=2.0000
+OK  D-dos      [D adaptación]
+     r' = r*(1-r**2)*(4-r**2), theta' = 1  (comprobado: True)
+       linealización en el origen: [[4, -1], [1, 4]], valores propios [4 - I, 4 + I]
+       desde r=0.90: r(60)=1.0000
+       desde r=1.10: r(60)=1.0000
+       desde r=1.80: r(60)=1.0000
+       desde r=2.20: r(60)=4504.1426
+OK  D-nohip    [D adaptación]
+     r' = r**3*(1-r**2), theta' = -1  (comprobado: True)
+       linealización en el origen: [[0, 1], [-1, 0]], valores propios [-I, I]
+       desde r=0.90: r(60)=1.0000
+       desde r=1.10: r(60)=1.0000
+OK  E-cc       [E casi copia]
+     r' = r*(a-r**2), theta' = -2  (comprobado: True)
+       linealización en el origen: [[a, 2], [-2, a]], valores propios [a - 2*I, a + 2*I]
+       a=-1.000: ciclos en r = [], origen r'/r -> -1.000
+       a=+0.000: ciclos en r = [], origen r'/r -> +0.000
+       a=+1.000: ciclos en r = [1.0], origen r'/r -> +1.000
+OK  E-snic     [E adaptación]
+       a=-2.000: r* = [1.0], theta* = []
+       a=-1.000: r* = [1.0], theta* = [4.7124]
+       a=+0.000: r* = [1.0], theta* = [0.0, 3.1416]
+       a=+1.000: r* = [1.0], theta* = [1.5708]
+       a=+2.000: r* = [1.0], theta* = []
+OK  E-sub      [E adaptación]
+     r' = r*(mu+r**2-r**4), theta' = 1  (comprobado: True)
+       linealización en el origen: [[mu, -1], [1, mu]], valores propios [mu - I, mu + I]
+       mu=-1.250: ciclos en r = [], origen r'/r -> -1.250
+       mu=-0.250: ciclos en r = [0.7071], origen r'/r -> -0.250
+       mu=-0.125: ciclos en r = [0.3827, 0.9239], origen r'/r -> -0.125
+       mu=+0.000: ciclos en r = [1.0], origen r'/r -> +0.000
+       mu=+1.000: ciclos en r = [1.272], origen r'/r -> +1.000
+OK  E-anillos  [E nueva]
+       mu=-1.000: r* = [], theta* = []
+       mu=+0.000: r* = [1.0], theta* = []
+       mu=+0.500: r* = [0.2929, 1.7071], theta* = []
+       mu=+1.000: r* = [2.0], theta* = []
+       mu=+2.000: r* = [2.4142], theta* = []
+OK  F-lien1    [F casi copia]
+     r r' = -y^2(1z^2+4y^2-4); anillo 0.900 <= r <= 2.000; ciclo numérico entre r=1.006 y 1.490
+OK  F-lien2    [F casi copia]
+     r r' = -y^2(4z^2+1y^2-4); anillo 0.900 <= r <= 2.000; ciclo numérico entre r=1.162 y 1.942
+OK  F-lien3    [F casi copia]
+     r r' = -y^2(1z^2+2y^2-2); anillo 0.900 <= r <= 1.414; ciclo numérico entre r=1.014 y 1.179
+OK  F-dulac    [F nueva]
+     div(Bf) = (-x - y)/(x*y) < 0 en el cuadrante; ejes invariantes
+     U(z) = -z**4/4 + 2*z**2; puntos críticos [-2.0, 0.0, 2.0]; periódicas si E < 4.0 y |z| < 2.0
+OK  G-cc       [G casi copia]
+     demostración: sin verificación automática (enunciado revisado a mano)
+OK  G-equil    [G adaptación]
+     demostración: sin verificación automática (enunciado revisado a mano)
+OK  G-sub      [G adaptación]
+     demostración: sin verificación automática (enunciado revisado a mano)
+OK  G-conexo   [G nueva]
+     demostración: sin verificación automática (enunciado revisado a mano)
+OK  H-cc       [H casi copia]
+     demostración: sin verificación automática (enunciado revisado a mano)
+OK  H-grad     [H adaptación]
+     demostración: sin verificación automática (enunciado revisado a mano)
+OK  H-bendix   [H nueva]
+     div f = 3*y**2 + 1 > 0 en todo el plano
+OK  I-cc1      [I casi copia]
+     raíces del coeficiente principal: [-2.0, 4.0]; t0=1 -> (-2.0, 4.0); t0=5 -> (4.0, inf)
+OK  I-cc2      [I casi copia]
+     raíces del coeficiente principal: [-3.0, 3.0]; t0=1 -> (-3.0, 3.0); t0=-4 -> (-inf, -3.0)
+OK  I-blow     [I nueva]
+     (a) x = tan(t), intervalo (-pi/2, pi/2)
+     (b) x = -x0/(t*x0 - 1); x0>0: (-inf,1/x0), x0<0: (1/x0,inf), x0=0: R
+OK  J-ab2      [J nueva]
+     V = x^2+2y^2 (a=1, b=2); V' = -2*x**4 - 4*y**4; valores propios en el origen [-sqrt(2)*I, sqrt(2)*I]
+OK  J-ab3      [J nueva]
+     V = x^2+3y^2 (a=1, b=3); V' = -2*x**4 - 6*y**4; valores propios en el origen [-sqrt(3)*I, sqrt(3)*I]
+OK  J-delta    [J adaptación]
+     V = x^2+y^2: V'<0 para r < 0.7078; equilibrio más cercano a distancia 0.7071; delta = 1/sqrt(2)
+
+44 de 44 ejercicios verificados.

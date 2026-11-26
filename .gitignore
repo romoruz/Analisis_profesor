@@ -1,0 +1,42 @@
+# Entornos
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+dist/
+build/
+*.egg-info/
+
+# Secretos: NUNCA se versionan
+.env
+.env.*
+!.env.example
+
+# Material del profesor y datos personales (calificaciones): no se suben por defecto.
+# Si tu repo es privado y quieres versionarlos, borra estas líneas conscientemente.
+materias/*/datos/**
+!materias/*/datos/.gitkeep
+materias/*/salidas/**
+!materias/*/salidas/.gitkeep
+*.zip
+
+# Caché de llamadas LLM y modelos descargados
+.cache/
+.llm_cache/
+
+# LaTeX
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+
+# SO / editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

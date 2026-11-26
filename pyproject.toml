@@ -1,0 +1,57 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "analisis-profesor"
+version = "0.1.0"
+description = "Análisis del material de un profesor (exámenes, tareas, notas) para estimar qué y cómo va a preguntar, y generar simulacros verificados."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+  "numpy>=1.26",
+  "scipy>=1.11",
+  "pandas>=2.1",
+  "scikit-learn>=1.4",
+  "sympy>=1.12",
+  "pydantic>=2.6",
+  "pyyaml>=6.0",
+  "typer>=0.12",
+  "rich>=13.7",
+  "pymupdf>=1.24",        # PDF -> texto/imagen (reemplaza pdftotext, no requiere poppler)
+  "datasketch>=1.6",      # MinHash/LSH para reciclaje literal
+  "jinja2>=3.1",          # plantillas LaTeX/HTML de simulacros y reportes
+]
+
+[project.optional-dependencies]
+# Capa LLM agnóstica de proveedor (Anthropic, Gemini, OpenAI, local) con salida estructurada
+llm = ["litellm>=1.50", "python-dotenv>=1.0", "diskcache>=5.6"]
+# Embeddings semánticos y tópicos
+nlp = ["sentence-transformers>=3.0", "bertopic>=0.16", "hdbscan>=0.8.33", "umap-learn>=0.5"]
+# OCR de PDFs escaneados con fórmulas (pesado: torch). Alternativa: VLM vía la capa llm.
+ocr = ["marker-pdf>=1.0"]
+# Modelos bayesianos jerárquicos (fase 5)
+bayes = ["pymc>=5.10", "arviz>=0.18"]
+# Interfaz opcional
+ui = ["streamlit>=1.35"]
+dev = ["pytest>=8.0", "pytest-cov>=5.0", "ruff>=0.5", "mypy>=1.10", "pre-commit>=3.7"]
+
+[project.scripts]
+ap = "analisis_profesor.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/analisis_profesor"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["legacy"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+ignore = ["B008", "UP042"]  # typer usa Option() en defaults; enums str compatibles con pydantic
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

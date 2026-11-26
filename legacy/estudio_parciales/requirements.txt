@@ -1,0 +1,5 @@
+numpy>=1.24
+scipy>=1.10
+scikit-learn>=1.3
+sympy>=1.12
+# además: poppler-utils (pdftotext) y LaTeX (pdflatex) para los PDFs

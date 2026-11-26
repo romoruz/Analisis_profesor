@@ -1,0 +1,3 @@
+id,tipo,origen,seccion,arq,examinable,pasos,parametro,dim,tecnica,no_hiperbolico,demostracion,algebra,global,casos,fuente,nivel,puntos,descripcion
+T1-1,tarea,T1,1.1,A,1,2,0,2,0,0,0,1,0,1,,,,ejemplo de fila de tarea
+E1-1,examen,P1_AAAA-MM-DD,1.1,A,1,2,0,2,0,0,0,1,0,1,T1-1,adaptacion,2,ejemplo de fila de examen (puntos = lo que sacaste)

@@ -1,0 +1,363 @@
+{
+ "K": [
+  "A",
+  "B",
+  "C",
+  "D",
+  "E",
+  "F",
+  "G",
+  "H",
+  "I",
+  "J"
+ ],
+ "nombres": {
+  "A": "Método del potencial: U, equilibrios, estabilidad, retrato fase",
+  "B": "Bifurcación en EDO de 2o orden o escalar: lambda_0, retratos y diagrama",
+  "C": "Bifurcación en sistema plano: ceroclinas, equilibrios según el parámetro",
+  "D": "Sistema polarizable sin parámetro: ciclos límite, omega y alfa límites",
+  "E": "Sistema en polares con parámetro: valores de bifurcación y retratos",
+  "F": "Existencia o no de órbitas periódicas (anillo atrapante, Dulac, energía)",
+  "G": "Demostración sobre conjuntos límite (omega(p))",
+  "H": "Demostración tipo Poincaré-Bendixson / no existencia de órbitas",
+  "I": "Existencia, unicidad e intervalo maximal; simetría de soluciones",
+  "J": "Funciones de Lyapunov: estabilidad y cuenca"
+ },
+ "minutos": {
+  "A": 25,
+  "B": 25,
+  "C": 30,
+  "D": 25,
+  "E": 30,
+  "F": 20,
+  "G": 15,
+  "H": 15,
+  "I": 20,
+  "J": 20
+ },
+ "p_base": {
+  "A": 0.538,
+  "B": 0.436,
+  "C": 0.328,
+  "D": 0.318,
+  "E": 0.377,
+  "F": 0.455,
+  "G": 0.458,
+  "H": 0.434,
+  "I": 0.395,
+  "J": 0.261
+ },
+ "p_min": {
+  "A": 0.445,
+  "B": 0.325,
+  "C": 0.225,
+  "D": 0.189,
+  "E": 0.32,
+  "F": 0.372,
+  "G": 0.3,
+  "H": 0.322,
+  "I": 0.317,
+  "J": 0.193
+ },
+ "p_max": {
+  "A": 0.656,
+  "B": 0.574,
+  "C": 0.399,
+  "D": 0.439,
+  "E": 0.426,
+  "F": 0.549,
+  "G": 0.582,
+  "H": 0.569,
+  "I": 0.48,
+  "J": 0.314
+ },
+ "combinaciones_rejilla": 27,
+ "combinaciones_top": [
+  [
+   [
+    "A",
+    "B",
+    "F",
+    "G"
+   ],
+   0.019
+  ],
+  [
+   [
+    "A",
+    "B",
+    "E",
+    "G"
+   ],
+   0.017
+  ],
+  [
+   [
+    "A",
+    "F",
+    "H",
+    "I"
+   ],
+   0.017
+  ],
+  [
+   [
+    "A",
+    "B",
+    "F",
+    "H"
+   ],
+   0.017
+  ],
+  [
+   [
+    "A",
+    "B",
+    "G",
+    "I"
+   ],
+   0.016
+  ],
+  [
+   [
+    "A",
+    "E",
+    "F",
+    "G"
+   ],
+   0.016
+  ],
+  [
+   [
+    "A",
+    "F",
+    "G",
+    "I"
+   ],
+   0.016
+  ],
+  [
+   [
+    "A",
+    "E",
+    "F",
+    "H"
+   ],
+   0.015
+  ]
+ ],
+ "sorteos_independientes": [
+  {
+   "preguntas": [
+    {
+     "arquetipo": "A",
+     "nivel": "nueva"
+    },
+    {
+     "arquetipo": "B",
+     "nivel": "nueva"
+    },
+    {
+     "arquetipo": "E",
+     "nivel": "nueva"
+    },
+    {
+     "arquetipo": "H",
+     "nivel": "adaptación"
+    }
+   ],
+   "minutos": 95
+  },
+  {
+   "preguntas": [
+    {
+     "arquetipo": "E",
+     "nivel": "nueva"
+    },
+    {
+     "arquetipo": "F",
+     "nivel": "casi copia"
+    },
+    {
+     "arquetipo": "J",
+     "nivel": "adaptación"
+    },
+    {
+     "arquetipo": "H",
+     "nivel": "adaptación"
+    }
+   ],
+   "minutos": 85
+  },
+  {
+   "preguntas": [
+    {
+     "arquetipo": "I",
+     "nivel": "nueva"
+    },
+    {
+     "arquetipo": "D",
+     "nivel": "adaptación"
+    },
+    {
+     "arquetipo": "B",
+     "nivel": "nueva"
+    },
+    {
+     "arquetipo": "H",
+     "nivel": "adaptación"
+    }
+   ],
+   "minutos": 85
+  },
+  {
+   "preguntas": [
+    {
+     "arquetipo": "B",
+     "nivel": "adaptación"
+    },
+    {
+     "arquetipo": "C",
+     "nivel": "nueva"
+    },
+    {
+     "arquetipo": "I",
+     "nivel": "adaptación"
+    },
+    {
+     "arquetipo": "H",
+     "nivel": "adaptación"
+    }
+   ],
+   "minutos": 90
+  },
+  {
+   "preguntas": [
+    {
+     "arquetipo": "C",
+     "nivel": "adaptación"
+    },
+    {
+     "arquetipo": "A",
+     "nivel": "casi copia"
+    },
+    {
+     "arquetipo": "E",
+     "nivel": "adaptación"
+    },
+    {
+     "arquetipo": "H",
+     "nivel": "adaptación"
+    }
+   ],
+   "minutos": 100
+  }
+ ],
+ "sorteos": [
+  {
+   "preguntas": [
+    {
+     "arquetipo": "D",
+     "nivel": "adaptación"
+    },
+    {
+     "arquetipo": "A",
+     "nivel": "casi copia"
+    },
+    {
+     "arquetipo": "E",
+     "nivel": "adaptación"
+    },
+    {
+     "arquetipo": "G",
+     "nivel": "adaptación"
+    }
+   ],
+   "minutos": 95
+  },
+  {
+   "preguntas": [
+    {
+     "arquetipo": "F",
+     "nivel": "casi copia"
+    },
+    {
+     "arquetipo": "I",
+     "nivel": "nueva"
+    },
+    {
+     "arquetipo": "C",
+     "nivel": "adaptación"
+    },
+    {
+     "arquetipo": "H",
+     "nivel": "adaptación"
+    }
+   ],
+   "minutos": 85
+  },
+  {
+   "preguntas": [
+    {
+     "arquetipo": "B",
+     "nivel": "adaptación"
+    },
+    {
+     "arquetipo": "A",
+     "nivel": "adaptación"
+    },
+    {
+     "arquetipo": "F",
+     "nivel": "nueva"
+    },
+    {
+     "arquetipo": "G",
+     "nivel": "casi copia"
+    }
+   ],
+   "minutos": 85
+  },
+  {
+   "preguntas": [
+    {
+     "arquetipo": "A",
+     "nivel": "casi copia"
+    },
+    {
+     "arquetipo": "J",
+     "nivel": "nueva"
+    },
+    {
+     "arquetipo": "C",
+     "nivel": "nueva"
+    },
+    {
+     "arquetipo": "H",
+     "nivel": "nueva"
+    }
+   ],
+   "minutos": 90
+  },
+  {
+   "preguntas": [
+    {
+     "arquetipo": "E",
+     "nivel": "adaptación"
+    },
+    {
+     "arquetipo": "B",
+     "nivel": "casi copia"
+    },
+    {
+     "arquetipo": "D",
+     "nivel": "casi copia"
+    },
+    {
+     "arquetipo": "I",
+     "nivel": "casi copia"
+    }
+   ],
+   "minutos": 100
+  }
+ ]
+}

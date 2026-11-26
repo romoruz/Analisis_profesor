@@ -1,0 +1,347 @@
+{
+ "K": [
+  "A",
+  "B",
+  "C",
+  "D",
+  "E",
+  "F",
+  "G",
+  "H",
+  "I",
+  "J",
+  "K"
+ ],
+ "nombres": {
+  "A": "Formular el dual (pregunta propia)",
+  "B": "Relación primal-dual: verificar optimalidad de un x* sin simplex / clasificar pares",
+  "C": "Holguras complementarias con información parcial",
+  "D": "Dual gráfico (2 variables duales) + holguras",
+  "E": "Problema en contexto: modelo, dual y precios sombra (¿conviene comprar/vender?)",
+  "F": "Sensibilidad leyendo un diccionario o tableau óptimo",
+  "G": "Sensibilidad con B^{-1}: rangos y nuevas soluciones",
+  "H": "Simplex dual (resolver o reoptimizar)",
+  "I": "Demostración de teoría de dualidad",
+  "J": "Usar dualidad en un problema estructurado (dimensión n)",
+  "K": "Punto interior (conceptual)"
+ },
+ "tiempo": {
+  "A": 15,
+  "B": 20,
+  "C": 25,
+  "D": 20,
+  "E": 30,
+  "F": 30,
+  "G": 35,
+  "H": 25,
+  "I": 15,
+  "J": 20,
+  "K": 10
+ },
+ "tarea": {
+  "A": 1.0,
+  "B": 1.0,
+  "C": 1.5,
+  "D": 1.0,
+  "E": 0.9,
+  "F": 0.6,
+  "G": 0.8,
+  "H": 0.2,
+  "I": 1.0,
+  "J": 1.0,
+  "K": 0.0
+ },
+ "clase": {
+  "A": 4.0,
+  "B": 1.0,
+  "C": 2.0,
+  "D": 0.0,
+  "E": 4.0,
+  "F": 1.0,
+  "G": 0.5,
+  "H": 2.0,
+  "I": 3.0,
+  "J": 0.0,
+  "K": 0.8999999999999999
+ },
+ "p_base": {
+  "A": 0.299,
+  "B": 0.241,
+  "C": 0.33,
+  "D": 0.222,
+  "E": 0.422,
+  "F": 0.278,
+  "G": 0.295,
+  "H": 0.223,
+  "I": 0.644,
+  "J": 0.219,
+  "K": 0.075
+ },
+ "p_min": {
+  "A": 0.248,
+  "B": 0.224,
+  "C": 0.282,
+  "D": 0.177,
+  "E": 0.348,
+  "F": 0.254,
+  "G": 0.237,
+  "H": 0.165,
+  "I": 0.624,
+  "J": 0.184,
+  "K": 0.047
+ },
+ "p_max": {
+  "A": 0.347,
+  "B": 0.275,
+  "C": 0.398,
+  "D": 0.255,
+  "E": 0.497,
+  "F": 0.309,
+  "G": 0.333,
+  "H": 0.276,
+  "I": 0.674,
+  "J": 0.247,
+  "K": 0.108
+ },
+ "agregados": {
+  "Alguna pregunta de sensibilidad (F, G o H)": 0.705,
+  "Alguna pregunta de holguras/relación primal-dual (B, C, D o J)": 0.781,
+  "Problema en contexto con precios sombra (E)": 0.422,
+  "Demostración (I)": 0.644,
+  "Simplex dual como pregunta (H)": 0.223
+ },
+ "p_cambio": {
+  "b dentro del rango": 0.318,
+  "b fuera del rango (simplex dual)": 0.091,
+  "costo básico (rango o nuevo óptimo)": 0.273,
+  "costo no básico": 0.182,
+  "variable o actividad nueva": 0.091,
+  "restricción nueva": 0.045
+ },
+ "p_rasgo": {
+  "inciso de teoría corta en una pregunta de cuentas": 0.75,
+  "inciso \"formule el dual\" dentro de otra pregunta": 0.5,
+  "al menos una pregunta casi copiada de la tarea": 0.75
+ },
+ "ternas_top": [
+  [
+   [
+    "C",
+    "E",
+    "I"
+   ],
+   0.0348
+  ],
+  [
+   [
+    "A",
+    "E",
+    "I"
+   ],
+   0.0319
+  ],
+  [
+   [
+    "B",
+    "E",
+    "I"
+   ],
+   0.0227
+  ],
+  [
+   [
+    "C",
+    "F",
+    "I"
+   ],
+   0.02205
+  ],
+  [
+   [
+    "C",
+    "G",
+    "I"
+   ],
+   0.0219
+  ],
+  [
+   [
+    "A",
+    "G",
+    "I"
+   ],
+   0.02105
+  ]
+ ],
+ "sorteos": [
+  {
+   "preguntas": [
+    {
+     "arquetipo": "E",
+     "nivel": "nueva",
+     "cambios": [
+      "variable o actividad nueva",
+      "restricción nueva"
+     ],
+     "teoria_corta": true,
+     "inciso_dual": false,
+     "pts": 3.5
+    },
+    {
+     "arquetipo": "C",
+     "nivel": "adaptación",
+     "teoria_corta": true,
+     "inciso_dual": false,
+     "pts": 2.5
+    },
+    {
+     "arquetipo": "I",
+     "nivel": "nueva",
+     "pts": 1.5
+    },
+    {
+     "arquetipo": "H",
+     "nivel": "nueva",
+     "teoria_corta": true,
+     "inciso_dual": true,
+     "pts": 2.5
+    }
+   ],
+   "minutos": 95
+  },
+  {
+   "preguntas": [
+    {
+     "arquetipo": "C",
+     "nivel": "nueva",
+     "teoria_corta": false,
+     "inciso_dual": false,
+     "pts": 2.5
+    },
+    {
+     "arquetipo": "G",
+     "nivel": "adaptación",
+     "cambios": [
+      "costo básico (rango o nuevo óptimo)",
+      "variable o actividad nueva",
+      "b fuera del rango (simplex dual)"
+     ],
+     "teoria_corta": true,
+     "inciso_dual": true,
+     "pts": 4.0
+    },
+    {
+     "arquetipo": "J",
+     "nivel": "casi copia de la Tarea 4",
+     "teoria_corta": true,
+     "inciso_dual": true,
+     "pts": 2.0
+    },
+    {
+     "arquetipo": "I",
+     "nivel": "casi copia de la Tarea 4",
+     "pts": 1.5
+    }
+   ],
+   "minutos": 95
+  },
+  {
+   "preguntas": [
+    {
+     "arquetipo": "I",
+     "nivel": "adaptación",
+     "pts": 2.0
+    },
+    {
+     "arquetipo": "F",
+     "nivel": "casi copia de la Tarea 4",
+     "cambios": [
+      "b dentro del rango",
+      "costo no básico",
+      "variable o actividad nueva"
+     ],
+     "teoria_corta": false,
+     "inciso_dual": false,
+     "pts": 3.5
+    },
+    {
+     "arquetipo": "A",
+     "nivel": "nueva",
+     "pts": 2.0
+    },
+    {
+     "arquetipo": "B",
+     "nivel": "nueva",
+     "teoria_corta": true,
+     "inciso_dual": true,
+     "pts": 2.5
+    }
+   ],
+   "minutos": 80
+  },
+  {
+   "preguntas": [
+    {
+     "arquetipo": "A",
+     "nivel": "adaptación",
+     "pts": 1.5
+    },
+    {
+     "arquetipo": "E",
+     "nivel": "nueva",
+     "cambios": [
+      "restricción nueva",
+      "costo básico (rango o nuevo óptimo)"
+     ],
+     "teoria_corta": true,
+     "inciso_dual": true,
+     "pts": 3.5
+    },
+    {
+     "arquetipo": "H",
+     "nivel": "adaptación",
+     "teoria_corta": true,
+     "inciso_dual": true,
+     "pts": 3.0
+    },
+    {
+     "arquetipo": "J",
+     "nivel": "casi copia de la Tarea 4",
+     "teoria_corta": false,
+     "inciso_dual": true,
+     "pts": 2.0
+    }
+   ],
+   "minutos": 90
+  },
+  {
+   "preguntas": [
+    {
+     "arquetipo": "A",
+     "nivel": "adaptación",
+     "pts": 2.5
+    },
+    {
+     "arquetipo": "J",
+     "nivel": "casi copia de la Tarea 4",
+     "teoria_corta": true,
+     "inciso_dual": false,
+     "pts": 3.0
+    },
+    {
+     "arquetipo": "F",
+     "nivel": "nueva",
+     "cambios": [
+      "costo no básico",
+      "restricción nueva",
+      "b dentro del rango"
+     ],
+     "teoria_corta": true,
+     "inciso_dual": true,
+     "pts": 4.5
+    }
+   ],
+   "minutos": 65
+  }
+ ]
+}

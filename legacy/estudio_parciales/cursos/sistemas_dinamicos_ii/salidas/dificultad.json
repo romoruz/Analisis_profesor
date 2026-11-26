@@ -1,0 +1,570 @@
+{
+ "rasgos": {
+  "pasos": {
+   "peso": 0.6,
+   "base": 1,
+   "max": 5
+  },
+  "parametro": {
+   "peso": 1.2,
+   "base": 0,
+   "max": 2
+  },
+  "dim": {
+   "peso": 0.5,
+   "base": 1,
+   "max": 4
+  },
+  "tecnica": {
+   "peso": 1.2,
+   "base": 0,
+   "max": 3
+  },
+  "no_hiperbolico": {
+   "peso": 1.0,
+   "base": 0,
+   "max": 1
+  },
+  "demostracion": {
+   "peso": 1.0,
+   "base": 0,
+   "max": 2
+  },
+  "algebra": {
+   "peso": 0.6,
+   "base": 0,
+   "max": 2
+  },
+  "global": {
+   "peso": 1.0,
+   "base": 0,
+   "max": 1
+  },
+  "casos": {
+   "peso": 0.4,
+   "base": 1,
+   "max": 4
+  }
+ },
+ "todo_el_curso": {
+  "scores": {
+   "T1-1": 1.29,
+   "T1-2": 1.04,
+   "T1-3": 2.39,
+   "T1-4": 2.15,
+   "T1-5": 3.56,
+   "T1-6": 2.09,
+   "T1-7": 1.72,
+   "T1-8": 2.15,
+   "T1-9": 2.15,
+   "T1-10": 2.27,
+   "T1-11": 3.87,
+   "T1-12": 2.15,
+   "T1-13": 3.25,
+   "T1-14": 2.15,
+   "T1-15": 1.9,
+   "T1-16": 0.98,
+   "T1-17": 2.15,
+   "T1-18": 1.35,
+   "T1-19": 3.19,
+   "T2-1": 3.31,
+   "T2-2": 2.02,
+   "T2-3": 0.0,
+   "T2-4": 1.66,
+   "T2-5": 2.02,
+   "T2-6": 1.78,
+   "T2-7": 2.76,
+   "T2-8": 1.72,
+   "T3-1": 1.66,
+   "T3-2": 1.53,
+   "T3-3": 1.66,
+   "T3-4": 3.68,
+   "T3-5": 5.71,
+   "T3-6": 3.74,
+   "T3-7": 2.02,
+   "T3-8": 2.15,
+   "T3-9": 3.13,
+   "T3-10": 2.39,
+   "T3-11": 2.76,
+   "T4-1": 2.09,
+   "T4-2": 0.61,
+   "T4-3a": 2.02,
+   "T4-3b": 2.39,
+   "T4-4": 1.96,
+   "T4-5": 2.76,
+   "T4-6": 3.13,
+   "T4-7": 4.36,
+   "T4-8": 4.72,
+   "T4-9": 4.97,
+   "T4-10": 4.23,
+   "T4-11": 1.72,
+   "T4-12": 3.44,
+   "T4-13i": 3.44,
+   "T4-13ii": 3.07,
+   "T4-13iii": 2.45,
+   "T4-14i": 3.56,
+   "T4-14ii": 3.5,
+   "E20-1": 2.45,
+   "E20-2": 3.56,
+   "E20-3": 4.48,
+   "E20-4": 2.88,
+   "E26a-1": 3.01,
+   "E26a-2": 2.45,
+   "E26a-3": 3.93,
+   "E26a-4": 2.88,
+   "E26b-1": 2.02,
+   "E26b-2": 2.58,
+   "E26b-3": 2.02,
+   "E26b-4": 1.35,
+   "E26m-1": 0.74,
+   "E26m-2": 2.27,
+   "E26m-3": 2.58,
+   "E26m-4": 2.76
+  },
+  "tareas": {
+   "n": 55,
+   "media": 2.57,
+   "mediana": 2.15,
+   "p25": 1.93,
+   "p75": 3.28
+  },
+  "examenes": {
+   "n": 16,
+   "media": 2.62,
+   "mediana": 2.58,
+   "p25": 2.21,
+   "p75": 2.91
+  },
+  "delta_medias": 0.05,
+  "percentil_examen_en_tareas": {
+   "E20-1": 60.0,
+   "E20-2": 85.5,
+   "E20-3": 94.5,
+   "E20-4": 65.5,
+   "E26a-1": 65.5,
+   "E26a-2": 60.0,
+   "E26a-3": 90.9,
+   "E26a-4": 65.5,
+   "E26b-1": 34.5,
+   "E26b-2": 60.0,
+   "E26b-3": 34.5,
+   "E26b-4": 9.1,
+   "E26m-1": 1.8,
+   "E26m-2": 52.7,
+   "E26m-3": 60.0,
+   "E26m-4": 65.5
+  },
+  "pares": [
+   {
+    "examen": "E20-1",
+    "fuente": "T4-13ii",
+    "nivel": "adaptacion",
+    "score_examen": 2.45,
+    "score_fuente": 3.07,
+    "delta": -0.61
+   },
+   {
+    "examen": "E20-2",
+    "fuente": "T4-14i",
+    "nivel": "adaptacion",
+    "score_examen": 3.56,
+    "score_fuente": 3.56,
+    "delta": 0.0
+   },
+   {
+    "examen": "E20-3",
+    "fuente": "T3-7",
+    "nivel": "adaptacion",
+    "score_examen": 4.48,
+    "score_fuente": 2.02,
+    "delta": 2.45
+   },
+   {
+    "examen": "E26a-1",
+    "fuente": "T4-3a",
+    "nivel": "adaptacion",
+    "score_examen": 3.01,
+    "score_fuente": 2.02,
+    "delta": 0.98
+   },
+   {
+    "examen": "E26a-2",
+    "fuente": "T4-13iii",
+    "nivel": "casi copia",
+    "score_examen": 2.45,
+    "score_fuente": 2.45,
+    "delta": 0.0
+   },
+   {
+    "examen": "E26a-3",
+    "fuente": "E20-2",
+    "nivel": "casi copia",
+    "score_examen": 3.93,
+    "score_fuente": 3.56,
+    "delta": 0.37
+   },
+   {
+    "examen": "E26a-4",
+    "fuente": "E20-4",
+    "nivel": "adaptacion",
+    "score_examen": 2.88,
+    "score_fuente": 2.88,
+    "delta": 0.0
+   },
+   {
+    "examen": "E26b-1",
+    "fuente": "T4-3a",
+    "nivel": "casi copia",
+    "score_examen": 2.02,
+    "score_fuente": 2.02,
+    "delta": 0.0
+   },
+   {
+    "examen": "E26b-2",
+    "fuente": "E26m-3",
+    "nivel": "casi copia",
+    "score_examen": 2.58,
+    "score_fuente": 2.58,
+    "delta": 0.0
+   },
+   {
+    "examen": "E26b-3",
+    "fuente": "T2-2",
+    "nivel": "adaptacion",
+    "score_examen": 2.02,
+    "score_fuente": 2.02,
+    "delta": 0.0
+   },
+   {
+    "examen": "E26b-4",
+    "fuente": "T2-1",
+    "nivel": "adaptacion",
+    "score_examen": 1.35,
+    "score_fuente": 3.31,
+    "delta": -1.96
+   },
+   {
+    "examen": "E26m-1",
+    "fuente": "T1-19",
+    "nivel": "adaptacion",
+    "score_examen": 0.74,
+    "score_fuente": 3.19,
+    "delta": -2.45
+   },
+   {
+    "examen": "E26m-2",
+    "fuente": "T1-11",
+    "nivel": "adaptacion",
+    "score_examen": 2.27,
+    "score_fuente": 3.87,
+    "delta": -1.6
+   },
+   {
+    "examen": "E26m-3",
+    "fuente": "T2-1",
+    "nivel": "adaptacion",
+    "score_examen": 2.58,
+    "score_fuente": 3.31,
+    "delta": -0.74
+   },
+   {
+    "examen": "E26m-4",
+    "fuente": "T2-1",
+    "nivel": "adaptacion",
+    "score_examen": 2.76,
+    "score_fuente": 3.31,
+    "delta": -0.55
+   }
+  ],
+  "delta_pares_media": -0.27
+ },
+ "alcance_parcial3": {
+  "tareas": {
+   "n": 27,
+   "media": 2.99,
+   "mediana": 2.76,
+   "p25": 2.06,
+   "p75": 3.53
+  },
+  "examenes": {
+   "n": 9,
+   "media": 3.07,
+   "mediana": 2.88,
+   "p25": 2.45,
+   "p75": 3.56
+  },
+  "delta_medias": 0.08,
+  "pares": [
+   {
+    "examen": "E20-1",
+    "fuente": "T4-13ii",
+    "nivel": "adaptacion",
+    "score_examen": 2.45,
+    "score_fuente": 3.07,
+    "delta": -0.61
+   },
+   {
+    "examen": "E20-2",
+    "fuente": "T4-14i",
+    "nivel": "adaptacion",
+    "score_examen": 3.56,
+    "score_fuente": 3.56,
+    "delta": 0.0
+   },
+   {
+    "examen": "E20-3",
+    "fuente": "T3-7",
+    "nivel": "adaptacion",
+    "score_examen": 4.48,
+    "score_fuente": 2.02,
+    "delta": 2.45
+   },
+   {
+    "examen": "E26a-1",
+    "fuente": "T4-3a",
+    "nivel": "adaptacion",
+    "score_examen": 3.01,
+    "score_fuente": 2.02,
+    "delta": 0.98
+   },
+   {
+    "examen": "E26a-2",
+    "fuente": "T4-13iii",
+    "nivel": "casi copia",
+    "score_examen": 2.45,
+    "score_fuente": 2.45,
+    "delta": 0.0
+   },
+   {
+    "examen": "E26a-3",
+    "fuente": "E20-2",
+    "nivel": "casi copia",
+    "score_examen": 3.93,
+    "score_fuente": 3.56,
+    "delta": 0.37
+   },
+   {
+    "examen": "E26a-4",
+    "fuente": "E20-4",
+    "nivel": "adaptacion",
+    "score_examen": 2.88,
+    "score_fuente": 2.88,
+    "delta": 0.0
+   },
+   {
+    "examen": "E26b-1",
+    "fuente": "T4-3a",
+    "nivel": "casi copia",
+    "score_examen": 2.02,
+    "score_fuente": 2.02,
+    "delta": 0.0
+   }
+  ],
+  "delta_pares_media": 0.4,
+  "percentil_examen_en_tareas": {
+   "E20-1": 44.4,
+   "E20-2": 77.8,
+   "E20-3": 88.9,
+   "E20-4": 51.9,
+   "E26a-1": 51.9,
+   "E26a-2": 44.4,
+   "E26a-3": 81.5,
+   "E26a-4": 51.9,
+   "E26b-1": 25.9
+  }
+ },
+ "robustez_todo": {
+  "delta_medias_p5_p50_p95": [
+   -0.09,
+   0.06,
+   0.21
+  ],
+  "delta_pares_p5_p50_p95": [
+   -0.39,
+   -0.27,
+   -0.16
+  ],
+  "frac_examen_mas_dificil_medias": 0.69,
+  "frac_examen_mas_dificil_pares": 0.0
+ },
+ "robustez_parcial3": {
+  "delta_medias_p5_p50_p95": [
+   -0.07,
+   0.09,
+   0.24
+  ],
+  "delta_pares_p5_p50_p95": [
+   0.32,
+   0.4,
+   0.48
+  ],
+  "frac_examen_mas_dificil_medias": 0.808,
+  "frac_examen_mas_dificil_pares": 1.0
+ },
+ "por_arquetipo": {
+  "A": {
+   "tarea": [
+    1.72,
+    2.09,
+    3.44,
+    3.07,
+    2.45
+   ],
+   "examen": [
+    2.45,
+    2.45
+   ]
+  },
+  "I": {
+   "tarea": [
+    1.66,
+    1.66,
+    1.72,
+    3.44
+   ],
+   "examen": []
+  },
+  "C": {
+   "tarea": [
+    5.71,
+    3.74,
+    4.23,
+    3.5
+   ],
+   "examen": []
+  },
+  "D": {
+   "tarea": [
+    2.02,
+    2.02,
+    2.39
+   ],
+   "examen": [
+    3.01,
+    2.02
+   ]
+  },
+  "G": {
+   "tarea": [
+    2.15
+   ],
+   "examen": [
+    2.88,
+    2.88
+   ]
+  },
+  "J": {
+   "tarea": [
+    3.13,
+    2.39,
+    2.76
+   ],
+   "examen": []
+  },
+  "F": {
+   "tarea": [
+    1.96,
+    2.76,
+    3.13
+   ],
+   "examen": []
+  },
+  "H": {
+   "tarea": [
+    4.36,
+    4.72
+   ],
+   "examen": []
+  },
+  "E": {
+   "tarea": [
+    4.97
+   ],
+   "examen": [
+    4.48
+   ]
+  },
+  "B": {
+   "tarea": [
+    3.56
+   ],
+   "examen": [
+    3.56,
+    3.93
+   ]
+  }
+ },
+ "objetivo": {
+  "A": {
+   "objetivo": 2.45,
+   "base": "examen",
+   "n": 2,
+   "tarea_media": 2.55
+  },
+  "B": {
+   "objetivo": 3.75,
+   "base": "examen",
+   "n": 2,
+   "tarea_media": 3.56
+  },
+  "C": {
+   "objetivo": 4.7,
+   "base": "tarea+delta",
+   "n": 4,
+   "tarea_media": 4.29
+  },
+  "D": {
+   "objetivo": 2.51,
+   "base": "examen",
+   "n": 2,
+   "tarea_media": 2.14
+  },
+  "E": {
+   "objetivo": 4.48,
+   "base": "examen",
+   "n": 1,
+   "tarea_media": 4.97
+  },
+  "F": {
+   "objetivo": 3.02,
+   "base": "tarea+delta",
+   "n": 3,
+   "tarea_media": 2.62
+  },
+  "G": {
+   "objetivo": 2.88,
+   "base": "examen",
+   "n": 2,
+   "tarea_media": 2.15
+  },
+  "H": {
+   "objetivo": 4.94,
+   "base": "tarea+delta",
+   "n": 2,
+   "tarea_media": 4.54
+  },
+  "I": {
+   "objetivo": 2.52,
+   "base": "tarea+delta",
+   "n": 4,
+   "tarea_media": 2.12
+  },
+  "J": {
+   "objetivo": 3.16,
+   "base": "tarea+delta",
+   "n": 3,
+   "tarea_media": 2.76
+  }
+ },
+ "dificultad_total_examen": {
+  "P2_2020-04-29": 13.37,
+  "P2_2026-05-04": 12.27,
+  "P2_2026-10-19": 7.97,
+  "P1_2026-03-04": 8.35
+ },
+ "contra_calificaciones": {
+  "n": 8,
+  "spearman": 0.685,
+  "p_valor": 0.061
+ }
+}

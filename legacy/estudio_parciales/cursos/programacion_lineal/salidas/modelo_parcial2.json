@@ -1,0 +1,211 @@
+{
+ "K": [
+  "A",
+  "B",
+  "C",
+  "D",
+  "E",
+  "F",
+  "G",
+  "H",
+  "I",
+  "J"
+ ],
+ "nombres": {
+  "A": "Dos fases (formular Fase I, resolver o base dada, Fase II)",
+  "B": "Tableau o diccionario con parámetros + terminar de resolver",
+  "C": "Demostración (propiedades del simplex, lemas, teoremas)",
+  "D": "Prueba de optimalidad de un x* con parámetro",
+  "E": "Óptimo finito según un parámetro",
+  "F": "Simplex completo desde holguras (tableau o matricial)",
+  "G": "Diccionario desde una base dada + iterar",
+  "H": "Soluciones básicas: clasificar SF/SB/SBF, TFPL, bases",
+  "I": "Construir un ejemplo (degeneración, contraejemplo)",
+  "J": "Forma estándar como pregunta aislada"
+ },
+ "tiempo": {
+  "A": 35,
+  "B": 35,
+  "C": 15,
+  "D": 25,
+  "E": 15,
+  "F": 25,
+  "G": 25,
+  "H": 20,
+  "I": 15,
+  "J": 10
+ },
+ "material_peso": {
+  "A": 8.0,
+  "B": 4.0,
+  "C": 4.5,
+  "D": 4.0,
+  "E": 2.0,
+  "F": 10.0,
+  "G": 6.0,
+  "H": 2.5,
+  "I": 2.0,
+  "J": 0.5
+ },
+ "material_share": {
+  "A": 0.184,
+  "B": 0.092,
+  "C": 0.103,
+  "D": 0.092,
+  "E": 0.046,
+  "F": 0.23,
+  "G": 0.138,
+  "H": 0.057,
+  "I": 0.046,
+  "J": 0.011
+ },
+ "examen_n": {
+  "A": 1.0,
+  "B": 1.0,
+  "C": 1.5,
+  "D": 0.0,
+  "E": 0.0,
+  "F": 0.0,
+  "G": 0.0,
+  "H": 0.5,
+  "I": 0.0,
+  "J": 0.5
+ },
+ "p_aparece_base": {
+  "A": 0.512,
+  "B": 0.378,
+  "C": 0.407,
+  "D": 0.232,
+  "E": 0.108,
+  "F": 0.482,
+  "G": 0.334,
+  "H": 0.329,
+  "I": 0.109,
+  "J": 0.214
+ },
+ "p_aparece_min": {
+  "A": 0.361,
+  "B": 0.224,
+  "C": 0.23,
+  "D": 0.125,
+  "E": 0.06,
+  "F": 0.293,
+  "G": 0.198,
+  "H": 0.257,
+  "I": 0.06,
+  "J": 0.101
+ },
+ "p_aparece_max": {
+  "A": 0.586,
+  "B": 0.521,
+  "C": 0.561,
+  "D": 0.359,
+  "E": 0.168,
+  "F": 0.666,
+  "G": 0.492,
+  "H": 0.476,
+  "I": 0.177,
+  "J": 0.365
+ },
+ "p_desenlace": {
+  "único": 0.375,
+  "múltiples": 0.125,
+  "no acotado": 0.125,
+  "infactible": 0.125,
+  "degenerado/empate": 0.167,
+  "artificial en cero": 0.083
+ },
+ "p_rasgo": {
+  "inciso de teoría corta dentro de un ejercicio computacional": 0.75,
+  "inciso \"sustituya estos valores y termine de resolver\" en parámetros": 0.667,
+  "base inicial dada (no desde holguras) en dos fases/diccionario": 0.667,
+  "al menos una pregunta casi copiada de una tarea": 0.75
+ },
+ "N_p": {
+  "2": 0.2,
+  "3": 0.6,
+  "4": 0.2
+ },
+ "sorteos": [
+  {
+   "escenario": "molde",
+   "preguntas": [
+    {
+     "arquetipo": "A",
+     "desenlace": "infactible",
+     "teoria_corta": true,
+     "base_dada": true,
+     "nivel": "casi copia de tarea",
+     "pts": 6.0
+    },
+    {
+     "arquetipo": "F",
+     "desenlace": "no acotado",
+     "teoria_corta": true,
+     "nivel": "nuevo",
+     "pts": 4.0
+    }
+   ],
+   "minutos": 60
+  },
+  {
+   "escenario": "molde",
+   "preguntas": [
+    {
+     "arquetipo": "B",
+     "desenlace": "único",
+     "teoria_corta": true,
+     "terminar_con_valores": false,
+     "nivel": "nuevo",
+     "pts": 4.0
+    },
+    {
+     "arquetipo": "G",
+     "desenlace": "único",
+     "teoria_corta": false,
+     "base_dada": true,
+     "nivel": "casi copia de tarea",
+     "pts": 2.5
+    },
+    {
+     "arquetipo": "A",
+     "desenlace": "infactible",
+     "teoria_corta": true,
+     "base_dada": true,
+     "nivel": "casi copia de tarea",
+     "pts": 3.5
+    }
+   ],
+   "minutos": 95
+  },
+  {
+   "escenario": "rotación",
+   "preguntas": [
+    {
+     "arquetipo": "A",
+     "desenlace": "degenerado/empate",
+     "teoria_corta": true,
+     "base_dada": false,
+     "nivel": "adaptación",
+     "pts": 4.0
+    },
+    {
+     "arquetipo": "F",
+     "desenlace": "degenerado/empate",
+     "teoria_corta": false,
+     "nivel": "casi copia de tarea",
+     "pts": 3.0
+    },
+    {
+     "arquetipo": "G",
+     "desenlace": "único",
+     "teoria_corta": true,
+     "base_dada": true,
+     "nivel": "nuevo",
+     "pts": 3.0
+    }
+   ],
+   "minutos": 85
+  }
+ ]
+}

@@ -1,0 +1,556 @@
+{
+ "tarea5_vs_tarea4": {
+  "T5-1": [
+   "T4-3",
+   0.977
+  ],
+  "T5-2": [
+   "T4-4",
+   0.962
+  ],
+  "T5-3": [
+   "T4-5",
+   0.959
+  ],
+  "T5-4": [
+   "T4-6",
+   0.994
+  ],
+  "T5-5": [
+   "T4-7",
+   0.978
+  ],
+  "T5-6": [
+   "T4-8",
+   0.989
+  ],
+  "T5-7": [
+   "T4-9",
+   0.973
+  ],
+  "T5-8": [
+   "T4-10",
+   0.962
+  ],
+  "T5-9": [
+   "T4-11",
+   0.977
+  ],
+  "T5-10": [
+   "T4-12",
+   0.946
+  ]
+ },
+ "E20-1": {
+  "vs_tareas": {
+   "mas_parecidos": [
+    [
+     "T4-13",
+     0.694
+    ],
+    [
+     "T4-1",
+     0.339
+    ],
+    [
+     "T3-5",
+     0.271
+    ]
+   ],
+   "clasificacion": "casi copia"
+  }
+ },
+ "E20-2": {
+  "vs_tareas": {
+   "mas_parecidos": [
+    [
+     "T4-14",
+     0.459
+    ],
+    [
+     "T3-5",
+     0.381
+    ],
+    [
+     "T4-10",
+     0.316
+    ]
+   ],
+   "clasificacion": "adaptación"
+  }
+ },
+ "E20-3": {
+  "vs_tareas": {
+   "mas_parecidos": [
+    [
+     "T4-14",
+     0.339
+    ],
+    [
+     "T4-10",
+     0.302
+    ],
+    [
+     "T3-5",
+     0.282
+    ]
+   ],
+   "clasificacion": "adaptación"
+  }
+ },
+ "E20-4": {
+  "vs_tareas": {
+   "mas_parecidos": [
+    [
+     "T2-6",
+     0.125
+    ],
+    [
+     "T1-8",
+     0.115
+    ],
+    [
+     "T2-7",
+     0.113
+    ]
+   ],
+   "clasificacion": "nueva"
+  }
+ },
+ "linea_base_tareas": {
+  "media": 0.083,
+  "p95": 0.184
+ },
+ "E26m-1": {
+  "vs_tareas": {
+   "mas_parecidos": [
+    [
+     "T4-5",
+     0.231
+    ],
+    [
+     "T2-8",
+     0.219
+    ],
+    [
+     "T3-10",
+     0.184
+    ]
+   ],
+   "clasificacion": "adaptación"
+  },
+  "vs_examenes_previos": {
+   "mas_parecidos": [
+    [
+     "E20-2",
+     0.223
+    ],
+    [
+     "E20-1",
+     0.115
+    ],
+    [
+     "E20-3",
+     0.108
+    ]
+   ],
+   "clasificacion": "nueva"
+  }
+ },
+ "E26m-2": {
+  "vs_tareas": {
+   "mas_parecidos": [
+    [
+     "T4-10",
+     0.329
+    ],
+    [
+     "T3-5",
+     0.319
+    ],
+    [
+     "T4-14",
+     0.255
+    ]
+   ],
+   "clasificacion": "adaptación"
+  },
+  "vs_examenes_previos": {
+   "mas_parecidos": [
+    [
+     "E20-3",
+     0.277
+    ],
+    [
+     "E20-2",
+     0.255
+    ],
+    [
+     "E20-1",
+     0.146
+    ]
+   ],
+   "clasificacion": "nueva"
+  }
+ },
+ "E26m-3": {
+  "vs_tareas": {
+   "mas_parecidos": [
+    [
+     "T3-5",
+     0.191
+    ],
+    [
+     "T2-1",
+     0.172
+    ],
+    [
+     "T2-7",
+     0.167
+    ]
+   ],
+   "clasificacion": "adaptación"
+  },
+  "vs_examenes_previos": {
+   "mas_parecidos": [
+    [
+     "E20-1",
+     0.228
+    ],
+    [
+     "E20-3",
+     0.146
+    ],
+    [
+     "E20-2",
+     0.133
+    ]
+   ],
+   "clasificacion": "nueva"
+  }
+ },
+ "E26m-4": {
+  "vs_tareas": {
+   "mas_parecidos": [
+    [
+     "T3-5",
+     0.359
+    ],
+    [
+     "T2-1",
+     0.334
+    ],
+    [
+     "T4-13",
+     0.239
+    ]
+   ],
+   "clasificacion": "adaptación"
+  },
+  "vs_examenes_previos": {
+   "mas_parecidos": [
+    [
+     "E20-1",
+     0.307
+    ],
+    [
+     "E20-2",
+     0.178
+    ],
+    [
+     "E20-3",
+     0.16
+    ]
+   ],
+   "clasificacion": "adaptación"
+  }
+ },
+ "E26a-1": {
+  "vs_tareas": {
+   "mas_parecidos": [
+    [
+     "T3-5",
+     0.378
+    ],
+    [
+     "T4-13",
+     0.238
+    ],
+    [
+     "T3-7",
+     0.224
+    ]
+   ],
+   "clasificacion": "adaptación"
+  },
+  "vs_examenes_previos": {
+   "mas_parecidos": [
+    [
+     "E20-3",
+     0.329
+    ],
+    [
+     "E26m-4",
+     0.315
+    ],
+    [
+     "E20-1",
+     0.285
+    ]
+   ],
+   "clasificacion": "adaptación"
+  }
+ },
+ "E26a-2": {
+  "vs_tareas": {
+   "mas_parecidos": [
+    [
+     "T4-13",
+     0.668
+    ],
+    [
+     "T4-1",
+     0.341
+    ],
+    [
+     "T3-5",
+     0.299
+    ]
+   ],
+   "clasificacion": "casi copia"
+  },
+  "vs_examenes_previos": {
+   "mas_parecidos": [
+    [
+     "E20-1",
+     0.879
+    ],
+    [
+     "E26m-4",
+     0.284
+    ],
+    [
+     "E20-3",
+     0.215
+    ]
+   ],
+   "clasificacion": "casi copia"
+  }
+ },
+ "E26a-3": {
+  "vs_tareas": {
+   "mas_parecidos": [
+    [
+     "T4-14",
+     0.421
+    ],
+    [
+     "T3-5",
+     0.372
+    ],
+    [
+     "T4-10",
+     0.312
+    ]
+   ],
+   "clasificacion": "adaptación"
+  },
+  "vs_examenes_previos": {
+   "mas_parecidos": [
+    [
+     "E20-2",
+     0.862
+    ],
+    [
+     "E20-3",
+     0.31
+    ],
+    [
+     "E26m-2",
+     0.241
+    ]
+   ],
+   "clasificacion": "casi copia"
+  }
+ },
+ "E26a-4": {
+  "vs_tareas": {
+   "mas_parecidos": [
+    [
+     "T1-8",
+     0.206
+    ],
+    [
+     "T1-18",
+     0.114
+    ],
+    [
+     "T3-3",
+     0.112
+    ]
+   ],
+   "clasificacion": "adaptación"
+  },
+  "vs_examenes_previos": {
+   "mas_parecidos": [
+    [
+     "E20-4",
+     0.41
+    ],
+    [
+     "E26m-4",
+     0.132
+    ],
+    [
+     "E20-3",
+     0.125
+    ]
+   ],
+   "clasificacion": "adaptación"
+  }
+ },
+ "E26b-1": {
+  "vs_tareas": {
+   "mas_parecidos": [
+    [
+     "T3-5",
+     0.383
+    ],
+    [
+     "T4-3",
+     0.366
+    ],
+    [
+     "T4-13",
+     0.274
+    ]
+   ],
+   "clasificacion": "adaptación"
+  },
+  "vs_examenes_previos": {
+   "mas_parecidos": [
+    [
+     "E20-3",
+     0.384
+    ],
+    [
+     "E26a-1",
+     0.38
+    ],
+    [
+     "E26a-2",
+     0.359
+    ]
+   ],
+   "clasificacion": "adaptación"
+  }
+ },
+ "E26b-2": {
+  "vs_tareas": {
+   "mas_parecidos": [
+    [
+     "T2-7",
+     0.174
+    ],
+    [
+     "T3-5",
+     0.174
+    ],
+    [
+     "T3-7",
+     0.163
+    ]
+   ],
+   "clasificacion": "nueva"
+  },
+  "vs_examenes_previos": {
+   "mas_parecidos": [
+    [
+     "E26m-3",
+     0.983
+    ],
+    [
+     "E20-1",
+     0.176
+    ],
+    [
+     "E26a-2",
+     0.164
+    ]
+   ],
+   "clasificacion": "casi copia"
+  }
+ },
+ "E26b-3": {
+  "vs_tareas": {
+   "mas_parecidos": [
+    [
+     "T2-2",
+     0.398
+    ],
+    [
+     "T4-13",
+     0.264
+    ],
+    [
+     "T3-5",
+     0.246
+    ]
+   ],
+   "clasificacion": "adaptación"
+  },
+  "vs_examenes_previos": {
+   "mas_parecidos": [
+    [
+     "E26a-1",
+     0.294
+    ],
+    [
+     "E20-1",
+     0.273
+    ],
+    [
+     "E26a-2",
+     0.254
+    ]
+   ],
+   "clasificacion": "nueva"
+  }
+ },
+ "E26b-4": {
+  "vs_tareas": {
+   "mas_parecidos": [
+    [
+     "T2-1",
+     0.324
+    ],
+    [
+     "T3-5",
+     0.288
+    ],
+    [
+     "T4-13",
+     0.23
+    ]
+   ],
+   "clasificacion": "adaptación"
+  },
+  "vs_examenes_previos": {
+   "mas_parecidos": [
+    [
+     "E26m-4",
+     0.408
+    ],
+    [
+     "E20-1",
+     0.248
+    ],
+    [
+     "E26a-2",
+     0.234
+    ]
+   ],
+   "clasificacion": "adaptación"
+  }
+ }
+}

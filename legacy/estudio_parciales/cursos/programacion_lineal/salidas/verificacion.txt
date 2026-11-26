@@ -1,0 +1,17 @@
+Verificación (scipy + simplex exacto + dualidad fuerte)
+
+OK  P2 Simulacro A - P1                z=32 x=['0', '8', '0'] dual=32
+OK  P2 Simulacro A - P3                z=16 x=['0', '0', '4'] dual=16 (óptimos múltiples)
+OK  P2 Sorteo 1 - P1                   infactible/infactible, w*=2
+OK  P2 Sorteo 1 - P2                   no_acotado/no_acotado
+OK  P2 Sorteo 3 - P1                   z=8 x=['0', '8', '0'] dual=8
+OK  P2 Sorteo 3 - P2                   z=14 x=['6', '4'] dual=14
+OK  P3 Simulacro 1 - Q1                z=2550 x=['30', '30', '0'] dual=2550
+OK  P3 Simulacro 3 - Q2                z=950 x=['70', '0', '40'] dual=950
+OK  P3 Simulacro 4 - Q2                z=400 x=['20', '0', '60'] dual=400
+OK  P3 Simulacro 4 - Q2 con x3<=50     z=390 x=['20', '5', '50'] dual=390
+OK  P3 Simulacro 4 - Q3                z=9 x=['3', '3'] dual=9
+OK  P2 Reposición 3 - P2 (paramétrico) x* óptimo en a = -3.0..3.0 (rejilla 0.25)
+    con a=0: z=-2, x=[2. 0. 2. 1. 0. 0.]
+
+12/12 casos coinciden.

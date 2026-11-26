@@ -1,0 +1,114 @@
+{
+ "modo": "examenes",
+ "n_items": {
+  "tarea": 23,
+  "examen": 6,
+  "clase": 39
+ },
+ "linea_base_media": 0.096,
+ "linea_base_p95": 0.242,
+ "top": {
+  "P1-Q1": {
+   "mas_parecidos": [
+    [
+     "T1-Ej3",
+     0.204
+    ],
+    [
+     "Clase9-b3",
+     0.106
+    ],
+    [
+     "Clase9-b2",
+     0.105
+    ]
+   ],
+   "clasificacion": "nueva"
+  },
+  "P1-Q2": {
+   "mas_parecidos": [
+    [
+     "T1-Ej10",
+     0.774
+    ],
+    [
+     "T2-Ej1",
+     0.289
+    ],
+    [
+     "T2-Ej2",
+     0.208
+    ]
+   ],
+   "clasificacion": "casi copia"
+  },
+  "P1-Q3": {
+   "mas_parecidos": [
+    [
+     "T1-Ej11",
+     0.319
+    ],
+    [
+     "T3-Ej4",
+     0.247
+    ],
+    [
+     "T2-Ej6",
+     0.237
+    ]
+   ],
+   "clasificacion": "adaptación"
+  },
+  "P2-Q1": {
+   "mas_parecidos": [
+    [
+     "T2-Ej6",
+     0.319
+    ],
+    [
+     "T3-Ej4",
+     0.295
+    ],
+    [
+     "T1-Ej11",
+     0.213
+    ]
+   ],
+   "clasificacion": "adaptación"
+  },
+  "P2-Q2": {
+   "mas_parecidos": [
+    [
+     "T3-Ej3",
+     0.547
+    ],
+    [
+     "Clase9-b2",
+     0.21
+    ],
+    [
+     "Clase9-b3",
+     0.198
+    ]
+   ],
+   "clasificacion": "casi copia"
+  },
+  "P2-Q3": {
+   "mas_parecidos": [
+    [
+     "T2-Ej5",
+     0.193
+    ],
+    [
+     "Clase9-b3",
+     0.186
+    ],
+    [
+     "Clase10-b2",
+     0.174
+    ]
+   ],
+   "clasificacion": "nueva"
+  }
+ }
+}

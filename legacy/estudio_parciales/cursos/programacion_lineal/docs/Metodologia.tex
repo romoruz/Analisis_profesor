@@ -1,0 +1,397 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{microtype}
+\emergencystretch=2em
+\usepackage{lmodern}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\setlist{itemsep=2pt,topsep=4pt}
+\newcommand{\cod}[1]{\texttt{#1}}
+\setlength{\parskip}{4pt}
+
+\title{Cómo se armaron los simulacros\\[2pt]\large Metodología, limitaciones y qué hacer sin pauta\\[2pt]\normalsize Programación Lineal MAT-24410}
+\date{Noviembre 2026}
+\author{}
+
+\begin{document}
+\maketitle
+
+\section{Qué es esto}
+
+Todo lo que se hizo para los Parciales 2 y 3 sigue el mismo camino: leer el material del
+profe, medir cuánto se parecen sus exámenes a sus tareas y clases, convertir eso en
+probabilidades de que salga cada tipo de pregunta, sortear exámenes con esas probabilidades y
+al final escribir y verificar ejercicios concretos para cada hueco del sorteo.
+
+El \cod{.zip} trae el código de cada paso en \cod{src/}, numerado en el orden en que se
+corre. Los pasos 1 a 4 reproducen exactamente los resultados que se usaron (las mismas
+similitudes y los mismos sorteos, porque las semillas están fijas). Los pasos 5 y 6 y la
+carpeta \cod{herramientas/} son versiones reescritas de los scripts de búsqueda y
+verificación que usé en su momento; esos se perdieron y estos hacen lo mismo. El paso 6
+vuelve a resolver 12 de las respuestas de los simulacros y las 12 coinciden.
+
+\paragraph{Datos.} Las pautas de la Prueba 1 y la Prueba 2 (seis preguntas en total), las
+Tareas 1 a 4 y las Clases 7 a 16. Eso es todo. Es poca evidencia y casi todas las
+limitaciones de la sección~\ref{sec:lim} vienen de ahí.
+
+\section{El método, paso por paso}
+
+\subsection{Extracción (\cod{01\_extraer\_textos.py})}
+Cada PDF se pasa a texto con \cod{pdftotext -layout}. Las pautas se cortan en la palabra
+``SOLUCI'' para quedarnos solo con los enunciados, las tareas se parten por ``Ejercicio N'' y
+las clases por bloques de ejemplo.
+
+\subsection{¿Cuánto recicla? Similitud de textos (\cod{02\_similitud.py})}
+Cada pregunta de examen se compara contra cada ejercicio de tarea y cada bloque de clase. Para
+cada par se calcula
+\[
+s = \tfrac12\big(\cos_{\text{car}} + \cos_{\text{pal}}\big),
+\]
+donde $\cos_{\text{car}}$ es la similitud coseno entre vectores TF-IDF de $n$-gramas de
+caracteres (3 a 5, dentro de palabra) y $\cos_{\text{pal}}$ la de $n$-gramas de palabras (1 y
+2). Los caracteres atrapan fórmulas y números parecidos; las palabras atrapan redacción.
+
+Un número suelto de similitud no dice nada, porque todos los textos de PL comparten
+vocabulario (``sujeto a'', ``base'', ``óptimo''). Por eso se mide primero la similitud entre
+pares de ejercicios \emph{distintos} y se toma su percentil 95 como línea base. Luego:
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+$s > 0.5$ & casi copia \\
+línea base p95 $< s \le 0.5$ & adaptación \\
+$s \le$ p95 & nueva (al menos en redacción) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{center}
+\small
+\begin{tabular}{llcc}
+\toprule
+Pregunta & Lo más parecido & $s$ & Clasificación \\
+\midrule
+P1-Q1 & T1-Ej3 & 0.204 & nueva \\
+P1-Q2 & T1-Ej10 & 0.774 & casi copia \\
+P1-Q3 & T1-Ej11 & 0.319 & adaptación \\
+P2-Q1 & T2-Ej6 & 0.319 & adaptación \\
+P2-Q2 & T3-Ej3 & 0.547 & casi copia \\
+P2-Q3 & T2-Ej5 & 0.193 & nueva \\
+\bottomrule
+\end{tabular}
+
+\smallskip
+Línea base entre ejercicios distintos: media 0.096, p95 0.242.
+\end{center}
+
+En cada una de las seis preguntas lo más parecido es un ejercicio de tarea, no de clase. El
+texto marcó 4 de 6 por encima del umbral; al leerlas a mano se juzgó que 5 de 6 nacen de una
+idea de tarea (la diferencia es justo lo que TF-IDF no ve: misma idea, otra redacción). Ese
+``5 de 6'' es el dato que alimenta al modelo del Parcial 3. La mezcla 2 casi copias, 2
+adaptaciones y 2 nuevas es la razón de que en los sorteos el nivel de cada pregunta se elija
+con probabilidades iguales.
+
+Para el Parcial 3 se corrió también la Tarea 4 contra las Clases 12 a 16: ningún ejercicio
+pasa de 0.27 con línea base p95 de 0.397. La Tarea 4 no copia las clases, así que las
+preguntas nuevas del Parcial 3 se esperan desde la tarea más que desde las láminas.
+
+\subsection{Tipos de pregunta (arquetipos)}
+No se predicen preguntas concretas sino \emph{tipos}: ``dos fases'', ``holguras
+complementarias con información parcial'', ``sensibilidad con $B^{-1}$'', etc. Cada tipo trae
+un tiempo estimado de resolución en minutos. El Parcial 2 usa 10 tipos (A--J) y el Parcial 3
+usa 11 (A--K); la lista completa está en el diccionario \cod{ARQ} de los scripts 3 y 4.
+
+Cada ejercicio del material se etiquetó a mano con su tipo y un peso:
+
+\begin{center}
+\begin{tabular}{lc}
+\toprule
+Ejercicio de tarea & 2 \\
+Ejemplo o ejercicio resuelto en clase & 1 \\
+Teorema o resultado de clase & 0.5 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+La tarea pesa el doble porque es lo que el profe eligió que hicieras y porque de ahí salieron
+sus exámenes. Si un ejercicio mezcla tipos se reparte (por ejemplo, Ej8 de la Tarea 4 cuenta
+0.6 como sensibilidad leyendo el tableau y 0.4 como problema en contexto). Sumando se obtiene
+un vector de pesos por tipo; normalizado es $\hat m$.
+
+\subsection{Modelo del Parcial 2 (\cod{03\_modelo\_parcial2.py})}
+Un examen simulado se genera así:
+\begin{enumerate}
+\item Se elige el escenario. Con probabilidad $\pi$ es ``molde'' (el profe repite lo que ya
+preguntó) y con $1-\pi$ es ``rotación'' (evita lo que ya salió en la Prueba 2).
+\item Se sortean las probabilidades de cada tipo, $\theta \sim \text{Dirichlet}(\alpha)$, con
+\[
+\alpha_{\text{molde}} = \beta\,\hat m + \gamma\, n, \qquad
+\alpha_{\text{rot}} = \beta\,\hat m \cdot \rho^{\,\mathbf 1[\text{salió en P2}]} + 0.3\,\gamma\, n\cdot\mathbf 1[\text{no salió en P2}].
+\]
+$n$ cuenta lo que ya apareció en exámenes (la Prueba 1 cuenta 0.5 porque tenía otro temario),
+$\beta$ dice cuánto le creemos al material, $\gamma$ cuánto a los exámenes, $\rho<1$ castiga
+lo ya preguntado.
+\item Número de preguntas $N\in\{2,3,4\}$ con probabilidades $0.2,\ 0.6,\ 0.2$ (los dos
+exámenes tuvieron 3).
+\item Se eligen $N$ tipos distintos sin reemplazo, cada uno con probabilidad proporcional a
+$\theta$ entre los que quedan (muestreo de Plackett--Luce).
+\item Si la suma de tiempos no cae entre 60 y 95 minutos el examen se descarta: no cabría en
+hora y media o sería trivial.
+\end{enumerate}
+Con $20\,000$ exámenes aceptados se estima la probabilidad de que aparezca cada tipo. Como
+$\beta,\gamma,\rho,\pi$ son juicios míos y no datos, se recorrió una rejilla de 54
+combinaciones ($\beta\in\{3,6,12\}$, $\gamma\in\{1,2,3\}$, $\rho\in\{0.3,0.6\}$,
+$\pi\in\{0.3,0.5,0.7\}$) y se reporta el mínimo y el máximo de cada probabilidad. El caso base
+es $\beta=6,\gamma=2,\rho=0.6,\pi=0.5$.
+
+\begin{center}
+\small
+\begin{tabular}{llccc}
+\toprule
+& Tipo & Base & Mín & Máx \\
+\midrule
+A & Dos fases & 0.51 & 0.36 & 0.59 \\
+F & Simplex completo desde holguras & 0.48 & 0.29 & 0.67 \\
+C & Demostración & 0.41 & 0.23 & 0.56 \\
+B & Tableau con parámetros & 0.38 & 0.22 & 0.52 \\
+G & Diccionario desde una base dada & 0.33 & 0.20 & 0.49 \\
+H & Soluciones básicas, TFPL & 0.33 & 0.26 & 0.48 \\
+D & Optimalidad de $x^*$ con parámetro & 0.23 & 0.13 & 0.36 \\
+J & Forma estándar aislada & 0.21 & 0.10 & 0.37 \\
+I & Construir un ejemplo & 0.11 & 0.06 & 0.18 \\
+E & Óptimo finito según parámetro & 0.11 & 0.06 & 0.17 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Los rasgos sueltos (que haya un inciso de teoría corta, que den la base inicial, que alguna
+pregunta sea casi copia) se estimaron con la regla de Laplace: si algo pasó $s$ veces en $n$
+oportunidades, $P=(1+s)/(2+n)$, que es la media de una posterior Beta$(1+s,\,1+n-s)$. El
+desenlace de cada ejercicio de cuentas (óptimo único, múltiples, no acotado, infactible,
+degenerado, artificial en cero) se sorteó con los conteos del material más uno.
+
+\subsection{Modelo del Parcial 3 (\cod{04\_modelo\_parcial3.py})}
+Aquí no había ningún examen previo del tema, así que la evidencia sobre el profe se tomó de
+\emph{cómo} arma exámenes, no de \emph{qué} preguntó:
+\begin{itemize}
+\item Hay dos vectores de pesos, uno de la Tarea 4 ($\hat t$) y otro de las Clases 12--16
+($\hat c$). Se sortean $\theta_t\sim\text{Dir}(\beta\hat t+0.3)$ y
+$\theta_c\sim\text{Dir}(\beta\hat c+0.3)$; el $+0.3$ evita que un tipo ausente del material
+tenga probabilidad cero.
+\item Cada pregunta sale de la tarea con probabilidad $\pi\sim\text{Beta}(6,2)$, que es
+Beta$(1,1)$ actualizada con ``5 de 6 preguntas pasadas salieron de una tarea''.
+\item Antes de llenar el examen, con probabilidad $q\sim\text{Beta}(2,2)$ se reserva un lugar
+para una demostración (una de las dos pruebas tuvo una).
+\item Regla de cobertura: el profe anunció ``sensibilidad, dual y primal''. Con probabilidad
+$\kappa=0.8$ se descarta todo examen que no toque los dos bloques, sensibilidad
+\{E, F, G, H\} y dualidad \{A, B, C, D, I, J\}.
+\item Mismo $N$ y misma ventana de 60 a 95 minutos.
+\end{itemize}
+Rejilla: $\beta\in\{3,6,12\}$, $\pi\in\{0.6,0.75,0.9\}$ fijo, $\kappa\in\{0.6,0.8,1\}$; 27
+combinaciones.
+
+\begin{center}
+\small
+\begin{tabular}{llccc}
+\toprule
+& Tipo & Base & Mín & Máx \\
+\midrule
+I & Demostración de dualidad & 0.64 & 0.62 & 0.67 \\
+E & Contexto + dual + precios sombra & 0.42 & 0.35 & 0.50 \\
+C & Holguras complementarias & 0.33 & 0.28 & 0.40 \\
+A & Formular el dual & 0.30 & 0.25 & 0.35 \\
+G & Sensibilidad con $B^{-1}$ & 0.30 & 0.24 & 0.33 \\
+F & Sensibilidad leyendo el tableau & 0.28 & 0.25 & 0.31 \\
+B & Relación primal-dual & 0.24 & 0.22 & 0.28 \\
+H & Simplex dual & 0.22 & 0.17 & 0.28 \\
+D & Dual gráfico & 0.22 & 0.18 & 0.26 \\
+J & Dualidad en problema de dimensión $n$ & 0.22 & 0.18 & 0.25 \\
+K & Punto interior & 0.08 & 0.05 & 0.11 \\
+\bottomrule
+\end{tabular}
+\end{center}
+A nivel bloque: alguna pregunta de sensibilidad (F, G o H) 0.71; alguna de holguras o
+relación primal-dual (B, C, D o J) 0.78.
+
+\subsection{Sorteo de simulacros}
+Con los hiperparámetros base se simula un examen a la vez con una semilla fija (31102026
+para el Parcial 2, 9112026 para el Parcial 3). Si la combinación de tipos ya salió se descarta
+y se sortea otra, para que no haya dos simulacros con la misma estructura. A cada pregunta se
+le sortea su nivel (casi copia, adaptación o nueva), su desenlace o el tipo de cambio de
+sensibilidad, y si lleva inciso de teoría corta o de ``formule el dual''. Los puntos se reparten
+proporcionales al tiempo estimado, redondeados a medio punto. Pedir más sorteos con la misma
+semilla conserva los primeros: así salieron los simulacros 4 y 5 del Parcial 3 sin tocar los
+tres anteriores.
+
+\subsection{Del sorteo al ejercicio (\cod{05\_generar\_problemas.py})}
+El sorteo solo dice, por ejemplo, ``dos fases, casi copia, desenlace infactible''. El ejercicio
+concreto se encuentra por búsqueda aleatoria con filtros:
+\begin{enumerate}
+\item Proponer un problema chico (2 o 3 restricciones, 2 o 3 variables) con enteros chicos.
+\item Filtrar rápido con \cod{scipy.optimize.linprog} (HiGHS) por el desenlace pedido.
+\item Confirmar con el simplex exacto en fracciones de \cod{herramientas/simplex.py}, con las
+convenciones del curso: minimizar, entra el costo reducido más negativo, empates con Bland, dos
+fases con artificiales solo en filas $\ge$ e $=$.
+\item Quedarse solo con números de examen: denominadores de a lo más 6 (3 en sensibilidad), sin
+empates salvo que el sorteo pida degeneración, número de pivotes razonable.
+\end{enumerate}
+Para preguntas con parámetro se trabajó al revés: se fija la base que debe ser óptima, se
+escriben sus costos reducidos como funciones del parámetro y se eligen los costos para que el
+conjunto donde todos son $\ge0$ tenga la forma deseada (por ejemplo $[-3,-2]\cup[1,3]$ en la
+Reposición 3). Para sensibilidad, \cod{herramientas/sensibilidad.py} calcula rangos de $b_i$ y
+de $c_j$ y precios sombra desde la base óptima. El texto de cada pregunta lo redacté a mano
+imitando la forma de escribir del profe.
+
+\subsection{Verificación (\cod{06\_verificar\_respuestas.py})}
+Cada respuesta se resuelve tres veces: con HiGHS en punto flotante, con el simplex exacto, y
+se arma el dual para comprobar dualidad fuerte ($z_{\text{primal}}=z_{\text{dual}}$). El
+paramétrico se revisa barriendo el parámetro en una rejilla. Este archivo contiene soluciones,
+así que no lo abras antes de hacer los simulacros.
+
+\section{Limitaciones}\label{sec:lim}
+
+\paragraph{Dos exámenes son casi nada.} Todo el modelo descansa en seis preguntas. Un solo
+examen nuevo puede mover las probabilidades mucho más que cualquier cambio de hiperparámetros.
+Las tablas no son frecuencias medidas: son una forma ordenada de decir ``esto es lo que más
+pesa en el material''.
+
+\paragraph{Los hiperparámetros son opinión.} $\beta,\gamma,\rho,\pi,\kappa$, los pesos 2/1/0.5
+y el $+0.3$ de suavizado los elegí yo. La rejilla muestra cuánto cambia el resultado
+\emph{dentro} de los valores que probé, no fuera de ellos.
+
+\paragraph{El etiquetado es subjetivo.} Decidir que un ejercicio es ``holguras
+complementarias'' y no ``relación primal-dual'' es criterio. Otra persona etiquetaría distinto
+y las probabilidades cambiarían.
+
+\paragraph{TF-IDF mide palabras, no ideas.} Una pregunta con la misma idea que un ejercicio de
+tarea pero otra redacción y otros números sale como ``nueva''. Al revés, dos ejercicios con
+redacción parecida pero distinto fondo salen como copia. Por eso el origen final se decidió
+leyendo, y por eso también parte de la clasificación depende de que \cod{pdftotext} y las
+expresiones regulares partan bien los PDFs.
+
+\paragraph{Los tiempos son supuestos.} Los minutos por tipo los estimé; nadie cronometró. La
+ventana de 60 a 95 minutos depende de eso.
+
+\paragraph{La Prueba 1 era de otro temario.} Se usó con peso 0.5 para el Parcial 2, que es
+otra decisión arbitraria.
+
+\paragraph{Las preguntas se tratan casi como independientes.} El modelo solo exige que el
+examen quepa en tiempo y, en el Parcial 3, que cubra los dos bloques. Un profe real diseña el
+examen como un todo (por ejemplo, la misma matriz para dos preguntas), y eso no está modelado.
+
+\paragraph{Un sorteo no es un promedio.} Cinco sorteos tienen varianza. J (dualidad en
+dimensión $n$) tiene probabilidad base de 0.22 y salió en 3 de los 5 simulacros del Parcial 3;
+con probabilidad 0.22 por examen, que pase en 3 o más de 5 tiene probabilidad de alrededor de
+7\%. No significa que J sea más probable: para decidir qué estudiar usa las tablas, no la
+frecuencia en los simulacros.
+
+\paragraph{El generador prefiere números bonitos.} Por diseño busca denominadores chicos y
+pocos pivotes. Si el profe pone fracciones feas, los simulacros te van a parecer más fáciles
+de lo que es el examen en aritmética.
+
+\paragraph{La dificultad no está calibrada.} No hay forma de comparar la dificultad de un
+simulacro con la de un examen real sin que el mismo grupo resuelva los dos. Los simulacros
+intentan imitar extensión y tipo, no garantizan el mismo nivel.
+
+\paragraph{Prueba hacia atrás: una sola y con un error.} Antes de tener la Prueba 2 el análisis
+puso dos fases y tableau con parámetros arriba, y ambos salieron. Pero también dije que las
+demostraciones eran baja prioridad y la Prueba 2 tuvo una. Fueron 2 de 3 aciertos en un solo
+examen; eso no valida el método, solo dice que no falló por completo. Ojo: los modelos actuales
+ya incluyen la Prueba 2 como dato, así que no se pueden volver a ``probar'' contra ella.
+
+\section{Qué hacer cuando no hay pauta ni examen previo}
+
+Es la situación del Parcial 3 y la de cualquier primer parcial con un profe nuevo. La idea es
+la misma: sustituir la evidencia que falta por reglas explícitas, y reemplazarlas por datos en
+cuanto llegue el primer examen.
+
+\subsection{Armar la distribución de temas}
+\begin{enumerate}
+\item \textbf{El material es el prior.} Haz la lista de tipos de pregunta del temario y cuenta
+cuántas veces aparece cada uno en tareas (peso 2), ejemplos de clase (1) y teoremas (0.5). Si
+no hay tareas, usa solo la clase; si no hay nada, reparte uniforme entre los temas anunciados.
+\item \textbf{El temario anunciado es casi una restricción.} Si el profe dijo qué viene, exige
+que cada examen simulado toque todos los bloques anunciados (la regla $\kappa$), y baja el peso
+de lo que no anunció (en el Parcial 3, punto interior se multiplicó por 0.3).
+\item \textbf{Hábitos generales del profe.} Aunque los exámenes previos sean de otro tema
+dicen cómo examina: cuántas preguntas pone, si copia de la tarea, si pone demostraciones, si
+mete teoría corta dentro de las cuentas. Eso se pasa con la regla de Laplace, que con poca
+evidencia da probabilidades moderadas y no extremas.
+\item \textbf{Sin datos, hiperparámetros moderados y rejilla ancha.} Usa $\beta$ intermedio y
+reporta mínimo y máximo, no solo el caso base. Para estudiar, ordena por el \emph{mínimo}: un
+tema que sale arriba de 0.25 en todas las combinaciones es una apuesta más segura que uno que
+sale alto solo en el caso base.
+\end{enumerate}
+
+\subsection{Estructura por defecto}
+Cuando no sabes cómo arma el examen, usa lo que tuvieron las dos pruebas: tres preguntas en
+hora y media, una larga de cuentas (30 a 35 minutos), una mediana (20 a 25) y una corta de
+teoría o demostración (15). Los puntos proporcionales al tiempo. Cada pregunta de cuentas con
+un inciso final que pide interpretar o justificar.
+
+\subsection{Rúbrica genérica}
+Para calificarte cuando no hay pauta, reparte los puntos de cada pregunta así:
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{lcX}
+\toprule
+Criterio & Peso & Qué se revisa \\
+\midrule
+Planteamiento & 25\% & Forma estándar correcta, variables y restricciones bien definidas,
+dual bien formulado, base inicial correcta. \\
+Procedimiento & 40\% & Cada pivote o cálculo justificado: quién entra y por qué, prueba de
+la razón mínima, $B^{-1}$ y costos reducidos bien calculados. \\
+Resultado & 20\% & Solución y valor óptimo correctos, o el certificado correcto si es
+infactible o no acotado. \\
+Conclusión & 15\% & Se dice explícitamente qué pasó (óptimo único, múltiples, no acotado,
+infactible, degenerado) y se interpreta en el contexto si lo hay. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Reglas que conviene aplicar: un error de aritmética que se arrastra se castiga una sola vez si
+lo demás es consistente; un resultado correcto sin procedimiento vale a lo más el 20\% de
+``resultado''; en sensibilidad, un rango sin decir qué pasa fuera de él pierde la conclusión.
+Para demostraciones: 30\% hipótesis y lo que se quiere probar bien enunciados, 50\% la idea
+central (qué teorema o desigualdad se usa), 20\% rigor y cierre.
+
+\subsection{Calibrar tiempo y puntos}
+Resuelve tú mismo el simulacro con cronómetro. Si te tardas más de 1.3 veces la hora y media,
+el simulacro está largo: quita un inciso o cambia una pregunta por una más corta. Si te sobran
+más de 30 minutos, está corto. Ajusta los minutos de cada tipo en \cod{ARQ} con lo que
+mediste; así los sorteos siguientes salen mejor calibrados.
+
+\subsection{Otras fuentes de señal}
+Exámenes de semestres anteriores del mismo profe o de otros grupos del mismo curso; lo que el
+profe dijo en clase (``esto viene'', ``esto no lo voy a preguntar''); a qué temas les dedicó
+más clases; qué ejercicios de tarea tienen más incisos. Todo esto entra como peso extra en el
+material o como ajuste a $\kappa$.
+
+\subsection{Actualizar cuando llegue el examen real}
+\begin{enumerate}
+\item Etiqueta las preguntas del examen con los mismos tipos y súmalas a $n$ (evidencia de
+examen) en el script del modelo.
+\item Corre \cod{02\_similitud.py} con el examen nuevo para ver si copió, adaptó o inventó, y
+actualiza la probabilidad de origen ($\pi$) y la de cada rasgo.
+\item Lleva un registro de qué tan bien predijo el modelo. Para cada tipo $k$ con probabilidad
+predicha $p_k$ y $y_k=1$ si salió, el puntaje de Brier es
+$\frac{1}{K}\sum_k (p_k-y_k)^2$. Un modelo que no sabe nada y le pone 0.27 a todo (3 de 11)
+saca alrededor de 0.20; si el tuyo no le gana a eso, el material no está prediciendo nada y
+conviene confiar más en los hábitos generales del profe.
+\end{enumerate}
+
+\subsection{Autocalificación}
+Después de hacer un simulacro, agrega tus respuestas como casos en
+\cod{06\_verificar\_respuestas.py} y córrelo: te dice si el estado, $z^*$ y $x^*$ coinciden y
+si el dual da lo mismo. Para sensibilidad, \cod{herramientas/sensibilidad.py} da los rangos y
+precios sombra de cualquier base que le pases. Con eso y la rúbrica de arriba puedes
+calificarte sin pauta.
+
+\end{document}

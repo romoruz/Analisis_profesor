@@ -1,0 +1,164 @@
+{
+ "modo": "tarea4",
+ "n_items": {
+  "clase": 23,
+  "tarea": 9
+ },
+ "linea_base_media": 0.136,
+ "linea_base_p95": 0.397,
+ "top": {
+  "T4-Ej1": {
+   "mas_parecidos": [
+    [
+     "Clase12-b2",
+     0.27
+    ],
+    [
+     "Clase12-b3",
+     0.258
+    ],
+    [
+     "Clase12-b1",
+     0.219
+    ]
+   ],
+   "clasificacion": "nueva"
+  },
+  "T4-Ej2": {
+   "mas_parecidos": [
+    [
+     "Clase12-b3",
+     0.176
+    ],
+    [
+     "Clase13-b6",
+     0.172
+    ],
+    [
+     "Clase12-b2",
+     0.166
+    ]
+   ],
+   "clasificacion": "nueva"
+  },
+  "T4-Ej3": {
+   "mas_parecidos": [
+    [
+     "Clase13-b6",
+     0.258
+    ],
+    [
+     "Clase13-b5",
+     0.218
+    ],
+    [
+     "Clase13-b1",
+     0.164
+    ]
+   ],
+   "clasificacion": "nueva"
+  },
+  "T4-Ej4": {
+   "mas_parecidos": [
+    [
+     "Clase13-b6",
+     0.223
+    ],
+    [
+     "Clase13-b3",
+     0.158
+    ],
+    [
+     "Clase12-b3",
+     0.156
+    ]
+   ],
+   "clasificacion": "nueva"
+  },
+  "T4-Ej5": {
+   "mas_parecidos": [
+    [
+     "Clase13-b6",
+     0.177
+    ],
+    [
+     "Clase12-b3",
+     0.146
+    ],
+    [
+     "Clase12-b6",
+     0.136
+    ]
+   ],
+   "clasificacion": "nueva"
+  },
+  "T4-Ej6": {
+   "mas_parecidos": [
+    [
+     "Clase13-b5",
+     0.165
+    ],
+    [
+     "Clase13-b6",
+     0.141
+    ],
+    [
+     "Clase16-b6",
+     0.107
+    ]
+   ],
+   "clasificacion": "nueva"
+  },
+  "T4-Ej7": {
+   "mas_parecidos": [
+    [
+     "Clase15-b2",
+     0.27
+    ],
+    [
+     "Clase15-b3",
+     0.256
+    ],
+    [
+     "Clase15-b1",
+     0.237
+    ]
+   ],
+   "clasificacion": "nueva"
+  },
+  "T4-Ej8": {
+   "mas_parecidos": [
+    [
+     "Clase15-b2",
+     0.188
+    ],
+    [
+     "Clase15-b3",
+     0.167
+    ],
+    [
+     "Clase15-b4",
+     0.157
+    ]
+   ],
+   "clasificacion": "nueva"
+  },
+  "T4-Ej9": {
+   "mas_parecidos": [
+    [
+     "Clase13-b6",
+     0.161
+    ],
+    [
+     "Clase16-b6",
+     0.158
+    ],
+    [
+     "Clase15-b5",
+     0.148
+    ]
+   ],
+   "clasificacion": "nueva"
+  }
+ }
+}
