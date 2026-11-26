@@ -35,6 +35,16 @@ def mini_dir() -> Path:
 
 
 @pytest.fixture(scope="session")
+def ruta_zip_sd2() -> Path:
+    """Ruta al zip real de SD-II o salta la prueba si no existe."""
+    env_zip = os.environ.get("AP_SD2_ZIP")
+    ruta = Path(env_zip) if env_zip else RUTA_ZIP_SD2_DEFECTO
+    if not ruta.is_file():
+        pytest.skip(f"No existe el material real de SD-II en {ruta}")
+    return ruta
+
+
+@pytest.fixture(scope="session")
 def sd2_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
     """Descomprime SD-II real en un directorio temporal o salta si no existe."""
     env_zip = os.environ.get("AP_SD2_ZIP")

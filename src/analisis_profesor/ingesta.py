@@ -16,6 +16,8 @@ from analisis_profesor.pdf import extraer_pdf
 EXTENSIONES_IMAGEN = frozenset(
     {".jpg", ".jpeg", ".png", ".webp", ".tif", ".tiff", ".bmp", ".gif", ".heic"}
 )
+EXTENSIONES_TEXTO = frozenset({".txt", ".md"})
+EXTENSIONES_MATERIAL = EXTENSIONES_IMAGEN | EXTENSIONES_TEXTO | {".pdf"}
 NOMBRES_IGNORADOS = frozenset({".DS_Store", "Thumbs.db", "desktop.ini", ".gitkeep"})
 MIN_CHARS_POR_PAGINA = 200
 
@@ -35,33 +37,51 @@ MESES_ES = {
     "diciembre": 12,
 }
 
-_REGLAS_TIPO_RUTA: tuple[tuple[str, str, str | None], ...] = (
-    ("pauta", r"(?:^|[^a-z0-9])(pauta|solucion(?:es|ario)?|resuelto)(?:[^a-z0-9]|$)", None),
-    ("temario", r"(?:^|[^a-z0-9])(temario|syllabus|programa|calendario)(?:[^a-z0-9]|$)", None),
+_REGLAS_TIPO_NOMBRE: tuple[tuple[str, str, str | None], ...] = (
+    (
+        "pauta",
+        r"(?:^|[^a-z0-9])(pauta(?:s)?|solucion(?:es|ario)?|resuelto(?:s)?)"
+        r"(?:[_-]?\d+)?(?:[^a-z0-9]|$)",
+        None,
+    ),
+    (
+        "temario",
+        r"(?:^|[^a-z0-9])(temario|syllabus|programa|calendario)(?:[_-]?\d+)?(?:[^a-z0-9]|$)",
+        None,
+    ),
     (
         "examen",
-        r"(?:^|[^a-z0-9])(examen(?:es)?|parcial(?:es)?|prueba(?:s)?|ordinario|extraordinario|final|quiz)(?:[^a-z0-9]|$)",
+        r"(?:^|[^a-z0-9])(examen(?:es)?|parcial(?:es)?|prueba(?:s)?|ordinario"
+        r"|extraordinario|final|quiz)(?:[_-]?\d+)?(?:[^a-z0-9]|$)",
         r"^p[1-9](?:[^a-z0-9]|$)",
     ),
     (
         "tarea",
-        r"(?:^|[^a-z0-9])(tarea(?:s)?|problemario|practica(?:s)?|hoja|serie|ejercicios)(?:[^a-z0-9]|$)",
+        r"(?:^|[^a-z0-9])(tarea(?:s)?|problemario|practica(?:s)?|hoja|serie|ejercicios)"
+        r"(?:[_-]?\d+)?(?:[^a-z0-9]|$)",
         r"^t[1-9]\d*(?:[^a-z0-9]|$)",
     ),
     (
         "clase",
-        r"(?:^|[^a-z0-9])(clase(?:s)?|lamina(?:s)?|presentacion(?:es)?|diapositiva(?:s)?|slides?)(?:[^a-z0-9]|$)",
+        r"(?:^|[^a-z0-9])(clase(?:s)?|lamina(?:s)?|presentacion(?:es)?|diapositiva(?:s)?|slides?)"
+        r"(?:[_-]?\d+)?(?:[^a-z0-9]|$)",
         r"^c[1-9]\d*(?:[^a-z0-9]|$)",
     ),
-    ("notas", r"(?:^|[^a-z0-9])(nota(?:s)?|apunte(?:s)?|resumen|formulario)(?:[^a-z0-9]|$)", None),
+    (
+        "notas",
+        r"(?:^|[^a-z0-9])(nota(?:s)?|apunte(?:s)?|resumen|formulario)"
+        r"(?:[_-]?\d+)?(?:[^a-z0-9]|$)",
+        None,
+    ),
 )
 
 _REGLAS_TIPO_TEXTO: tuple[tuple[str, str], ...] = (
-    ("pauta", r"(?:^|[^a-z0-9])(pauta|solucionario)(?:[^a-z0-9]|$)"),
+    ("pauta", r"(?:^|[^a-z0-9])(pauta\s+de|solucionario)(?:[^a-z0-9]|$)"),
     ("temario", r"(?:^|[^a-z0-9])(temario|bibliografia|syllabus)(?:[^a-z0-9]|$)"),
     (
         "examen",
-        r"(?:^|[^a-z0-9])(examen\s+(?:parcial|final)|(?:primer|segundo|tercer)\s+parcial|pregunta\s+1)(?:[^a-z0-9]|$)",
+        r"(?:^|[^a-z0-9])(examen\s+(?:parcial|final)|(?:primer|segundo|tercer)\s+parcial"
+        r"|pregunta\s+1)(?:[^a-z0-9]|$)",
     ),
     ("tarea", r"(?:^|[^a-z0-9])(tarea\s+\d+|problemario)(?:[^a-z0-9]|$)"),
     ("clase", r"(?:^|[^a-z0-9])(clase\s+\d+|diapositiva)(?:[^a-z0-9]|$)"),
@@ -107,14 +127,32 @@ def _descomprimir_seguro(ruta_zip: Path, destino: Path) -> list[Path]:
     return sorted(rutas, key=lambda p: p.as_posix())
 
 
-def adivinar_tipo(ruta_rel: str, texto: str = "") -> str:
-    """Clasifica un documento por ruta/nombre y, si no decide, por los primeros caracteres."""
-    ruta_norm = _sin_acentos(ruta_rel)
-    stem_norm = _sin_acentos(Path(ruta_rel).stem)
-    for tipo, patron_ruta, patron_stem in _REGLAS_TIPO_RUTA:
-        if re.search(patron_ruta, ruta_norm):
+def _carpeta_inmediata(rel: Path, raiz_envoltura: str | None) -> str:
+    if len(rel.parts) < 2:
+        return ""
+    if len(rel.parts) == 2 and rel.parts[0] == raiz_envoltura:
+        return ""
+    return rel.parent.name
+
+
+def _tipo_en_etiqueta(etiqueta: str, permitir_corto: bool) -> str:
+    norm = _sin_acentos(etiqueta)
+    for tipo, patron, patron_corto in _REGLAS_TIPO_NOMBRE:
+        if re.search(patron, norm):
             return tipo
-        if patron_stem and re.search(patron_stem, stem_norm):
+        if permitir_corto and patron_corto and re.search(patron_corto, norm):
+            return tipo
+    return ""
+
+
+def adivinar_tipo(nombre: str, carpeta: str = "", texto: str = "") -> str:
+    """Clasifica por prioridad: 1) nombre de archivo, 2) carpeta inmediata, 3) texto."""
+    tipo = _tipo_en_etiqueta(Path(nombre).stem, permitir_corto=True)
+    if tipo:
+        return tipo
+    if carpeta:
+        tipo = _tipo_en_etiqueta(carpeta, permitir_corto=False)
+        if tipo:
             return tipo
     if texto:
         muestra = _sin_acentos(texto[:1500])
@@ -144,9 +182,13 @@ def _fecha_en_texto(texto: str) -> str:
     return ""
 
 
-def adivinar_fecha(ruta_rel: str, texto: str = "") -> str:
-    """Extrae una fecha AAAA-MM-DD de la ruta o del encabezado del texto."""
-    return _fecha_en_texto(ruta_rel) or _fecha_en_texto(texto[:1500])
+def adivinar_fecha(nombre: str, carpeta: str = "", texto: str = "") -> str:
+    """Extrae una fecha AAAA-MM-DD por prioridad: nombre, carpeta inmediata, texto."""
+    return (
+        _fecha_en_texto(Path(nombre).stem)
+        or _fecha_en_texto(carpeta)
+        or _fecha_en_texto(texto[:1500])
+    )
 
 
 def _parcial_en_texto(texto: str) -> str:
@@ -171,9 +213,13 @@ def _parcial_en_texto(texto: str) -> str:
     return ""
 
 
-def adivinar_parcial(ruta_rel: str, texto: str = "") -> str:
-    """Deduce el parcial (P1, P2, final) de la ruta o del inicio del texto."""
-    return _parcial_en_texto(ruta_rel) or _parcial_en_texto(texto[:1500])
+def adivinar_parcial(nombre: str, carpeta: str = "", texto: str = "") -> str:
+    """Deduce el parcial (P1, P2, final) por prioridad: nombre, carpeta inmediata, texto."""
+    return (
+        _parcial_en_texto(Path(nombre).stem)
+        or _parcial_en_texto(carpeta)
+        or _parcial_en_texto(texto[:1500])
+    )
 
 
 def _id_unico(stem: str, usados: set[str]) -> str:
@@ -239,6 +285,15 @@ def ingestar(
     texto_dir.mkdir(parents=True, exist_ok=True)
 
     relativos = _descomprimir_seguro(ruta_zip, crudo_dir)
+    primeros = {p.parts[0] for p in relativos if len(p.parts) >= 2}
+    hay_subniveles = any(len(p.parts) >= 3 for p in relativos)
+    sin_sueltos_raiz = all(len(p.parts) >= 2 for p in relativos)
+    raiz_envoltura = (
+        next(iter(primeros))
+        if (len(primeros) == 1 and hay_subniveles and sin_sueltos_raiz)
+        else None
+    )
+
     docs: list[Documento] = []
     usados_id: set[str] = set()
     vistos_hash: dict[str, str] = {}
@@ -248,12 +303,28 @@ def ingestar(
         rel_posix = rel.as_posix()
         doc_id = _id_unico(rel.stem, usados_id)
         digest = _sha256(abs_ruta)
-        notas = f"duplicado de {vistos_hash[digest]}" if digest in vistos_hash else ""
+        nota_dup = f"duplicado de {vistos_hash[digest]}" if digest in vistos_hash else ""
         vistos_hash.setdefault(digest, doc_id)
 
         ext = rel.suffix.lower()
+        if ext not in EXTENSIONES_MATERIAL:
+            partes_nota = ["formato no soportado"]
+            if nota_dup:
+                partes_nota.append(nota_dup)
+            docs.append(
+                Documento(
+                    id=doc_id,
+                    archivo=rel_posix,
+                    tipo="otro",
+                    necesita_transcripcion=False,
+                    sha256=digest,
+                    notas="; ".join(partes_nota),
+                )
+            )
+            continue
+
         es_pdf = ext == ".pdf"
-        es_texto = ext in {".txt", ".md"}
+        es_texto = ext in EXTENSIONES_TEXTO
         es_imagen = ext in EXTENSIONES_IMAGEN
 
         if es_pdf:
@@ -270,12 +341,11 @@ def ingestar(
             metodo = ""
             poco_texto = True
 
-        tipo = adivinar_tipo(rel_posix, texto)
-        fecha = adivinar_fecha(rel_posix, texto)
-        parcial = adivinar_parcial(rel_posix, texto)
-        necesita = es_imagen or (es_pdf and poco_texto) or (tipo == "examen") or not (
-            es_pdf or es_texto
-        )
+        carpeta = _carpeta_inmediata(rel, raiz_envoltura)
+        tipo = adivinar_tipo(rel.name, carpeta, texto)
+        fecha = adivinar_fecha(rel.name, carpeta, texto)
+        parcial = adivinar_parcial(rel.name, carpeta, texto)
+        necesita = es_imagen or (es_pdf and poco_texto) or (tipo == "examen")
 
         if ((es_pdf and not poco_texto) or es_texto) and texto.strip():
             etiqueta_parcial = parcial or doc_id
@@ -295,7 +365,7 @@ def ingestar(
                 metodo_texto=metodo,
                 necesita_transcripcion=necesita,
                 sha256=digest,
-                notas=notas,
+                notas=nota_dup,
             )
         )
 

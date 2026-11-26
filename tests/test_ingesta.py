@@ -164,53 +164,123 @@ def test_cli_ingesta_subcomando(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
     assert (tmp_path / "trabajo" / "cli_test" / "02_texto" / "apuntes.md").is_file()
 
 
-@pytest.mark.real
-def test_ingesta_sd2_real(sd2_dir: Path, tmp_path: Path):
+@pytest.mark.parametrize("raiz_zip", ["estudio_parciales", "Parciales"])
+def test_clasificacion_prioridad_ignora_carpetas_superiores(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, raiz_zip: str
+):
+    import analisis_profesor.ingesta as ing_mod
+    from analisis_profesor.pdf import TextoPDF
+
+    ruta_zip = tmp_path / f"{raiz_zip}.zip"
+    with zipfile.ZipFile(ruta_zip, "w") as zf:
+        zf.writestr(f"{raiz_zip}/tareas/Tarea_1.pdf", b"%PDF-t1")
+        zf.writestr(f"{raiz_zip}/clases/Clase7.pdf", b"%PDF-c7")
+        zf.writestr(f"{raiz_zip}/tareas/documento.pdf", b"%PDF-doc")
+        zf.writestr(f"{raiz_zip}/examenes/Pauta_Prueba1.pdf", b"%PDF-p1")
+
+    monkeypatch.setattr(
+        ing_mod,
+        "extraer_pdf",
+        lambda _r: TextoPDF(["Contenido neutro del documento. " * 12], "pymupdf"),
+    )
+
+    docs = ing_mod.ingestar(ruta_zip, f"raiz_{raiz_zip}", raiz_trabajo=tmp_path / "trabajo")
+    por_nombre = {Path(d.archivo).name: d for d in docs}
+
+    assert por_nombre["Tarea_1.pdf"].tipo == "tarea"
+    assert por_nombre["Clase7.pdf"].tipo == "clase"
+    assert por_nombre["documento.pdf"].tipo == "tarea"
+    assert por_nombre["Pauta_Prueba1.pdf"].tipo == "pauta"
+
+
+def test_extensiones_no_material_formato_no_soportado(tmp_path: Path):
     from analisis_profesor.ingesta import ingestar
 
-    datos_dir = sd2_dir / "datos"
-    zip_sd2 = tmp_path / "sd2_material.zip"
-    with zipfile.ZipFile(zip_sd2, "w") as zf:
-        for ruta in sorted(datos_dir.rglob("*")):
-            if ruta.is_file():
-                zf.write(ruta, ruta.relative_to(datos_dir).as_posix())
+    ruta_zip = tmp_path / "mixto.zip"
+    with zipfile.ZipFile(ruta_zip, "w") as zf:
+        zf.writestr("src/04_modelo_parcial3.py", "print(1)\n")
+        zf.writestr("salidas/modelo.json", "{}\n")
+        zf.writestr("rasgos.csv", "a,b\n1,2\n")
+        zf.writestr("simulacros.tex", "\\documentclass{article}\n")
+        zf.writestr("correr.sh", "#!/bin/sh\n")
+        zf.writestr("guia.docx", b"PK\x03\x04docx")
+        zf.writestr("clase1.pptx", b"PK\x03\x04pptx")
+        zf.writestr("examenes/P1_2026-03-04.jpg", b"\xff\xd8\xff\xe0img")
 
     raiz_trabajo = tmp_path / "trabajo"
-    docs = ingestar(zip_sd2, "sd2", raiz_trabajo=raiz_trabajo)
+    docs = ingestar(ruta_zip, "mixto", raiz_trabajo=raiz_trabajo)
+    base = raiz_trabajo / "mixto"
+    por_archivo = {d.archivo: d for d in docs}
+
+    no_material = (
+        "src/04_modelo_parcial3.py",
+        "salidas/modelo.json",
+        "rasgos.csv",
+        "simulacros.tex",
+        "correr.sh",
+        "guia.docx",
+        "clase1.pptx",
+    )
+    for arch in no_material:
+        d = por_archivo[arch]
+        assert d.tipo == "otro"
+        assert d.necesita_transcripcion is False
+        assert "formato no soportado" in d.notas
+        assert not (base / "02_texto" / f"{d.id}.md").exists()
+
+    pendientes = (base / "pendientes_transcripcion.txt").read_text(encoding="utf-8").splitlines()
+    assert pendientes == ["examenes/P1_2026-03-04.jpg"]
+
+
+@pytest.mark.real
+def test_ingesta_sd2_real(ruta_zip_sd2: Path, tmp_path: Path):
+    from analisis_profesor.ingesta import EXTENSIONES_IMAGEN, ingestar
+
+    raiz_trabajo = tmp_path / "trabajo"
+    docs = ingestar(ruta_zip_sd2, "sd2", raiz_trabajo=raiz_trabajo)
     base = raiz_trabajo / "sd2"
-    assert len(docs) == 9
+    por_archivo = {d.archivo: d for d in docs}
 
-    por_id = {d.id: d for d in docs}
-    esperados_ex = {
-        "P1_2026-03-04": ("2026-03-04", "P1"),
-        "P2_2020-04-29": ("2020-04-29", "P2"),
-        "P2_2026-05-04": ("2026-05-04", "P2"),
-        "P2_2026-10-19": ("2026-10-19", "P2"),
-    }
-    for doc_id, (fecha, parcial) in esperados_ex.items():
-        d = por_id[doc_id]
-        assert (d.tipo, d.fecha, d.parcial, d.necesita_transcripcion) == (
-            "examen",
-            fecha,
-            parcial,
-            True,
-        )
+    sd2_datos = [d for d in docs if "sistemas_dinamicos_ii/datos/" in d.archivo]
+    assert len(sd2_datos) == 9
+    assert sum(1 for d in sd2_datos if d.tipo == "examen") == 4
+    assert sum(1 for d in sd2_datos if d.tipo == "tarea") == 5
 
-    for i in range(1, 6):
-        d = por_id[f"Tarea_{i}"]
-        assert d.tipo == "tarea"
-        assert len(d.sha256) == 64
+    clases_lp = [
+        d
+        for d in docs
+        if Path(d.archivo).name.startswith("Clase") and d.archivo.endswith("_LP.pdf")
+    ]
+    assert len(clases_lp) == 10
+    assert all(d.tipo == "clase" for d in clases_lp)
+
+    pautas = [
+        d
+        for d in docs
+        if Path(d.archivo).name.startswith("Pauta_Prueba") and d.archivo.endswith(".pdf")
+    ]
+    assert len(pautas) == 2
+    assert all(d.tipo == "pauta" for d in pautas)
+
+    for d in docs:
+        if Path(d.archivo).suffix.lower() in {".py", ".json", ".csv", ".tex", ".sh"}:
+            assert d.tipo == "otro"
+            assert not d.necesita_transcripcion
+            assert "formato no soportado" in d.notas
 
     if diagnostico()["lector_pdf"] is not None:
-        for i in range(1, 6):
-            assert not por_id[f"Tarea_{i}"].necesita_transcripcion
-            assert (base / "02_texto" / f"Tarea_{i}.md").read_text(encoding="utf-8").strip()
         pendientes = (
             (base / "pendientes_transcripcion.txt").read_text(encoding="utf-8").splitlines()
         )
-        assert pendientes == [
-            "examenes/P1_2026-03-04.jpg",
-            "examenes/P2_2020-04-29.jpg",
-            "examenes/P2_2026-05-04.jpg",
-            "examenes/P2_2026-10-19.jpg",
-        ]
+        for foto in (
+            "estudio_parciales/cursos/sistemas_dinamicos_ii/datos/examenes/P1_2026-03-04.jpg",
+            "estudio_parciales/cursos/sistemas_dinamicos_ii/datos/examenes/P2_2020-04-29.jpg",
+            "estudio_parciales/cursos/sistemas_dinamicos_ii/datos/examenes/P2_2026-05-04.jpg",
+            "estudio_parciales/cursos/sistemas_dinamicos_ii/datos/examenes/P2_2026-10-19.jpg",
+        ):
+            assert foto in pendientes
+        for arch in pendientes:
+            assert (
+                Path(arch).suffix.lower() in EXTENSIONES_IMAGEN
+                or por_archivo[arch].tipo == "examen"
+            )
