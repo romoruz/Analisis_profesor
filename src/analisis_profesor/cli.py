@@ -16,7 +16,6 @@ from pathlib import Path
 from analisis_profesor import __version__
 
 PENDIENTES = {
-    "similitud": ("Fase 1", "03_items.jsonl -> 04_similitud.json"),
     "plantilla-etiquetas": ("Fase 1", "-> 05_etiquetas.csv con una fila por ítem"),
     "acuerdo": ("Fase 3", "consistencia entre las dos pasadas de etiquetado"),
     "dificultad": ("Fase 1", "-> 06_dificultad.json"),
@@ -64,6 +63,8 @@ def main(argv: list[str] | None = None) -> int:
     s_ingesta.add_argument("--materia", "-m", default="", help="id corto para trabajo/<id>/")
     s_items = sub.add_parser("items", help="02_texto/*.md -> 03_items.jsonl")
     s_items.add_argument("materia", help="id de la materia en trabajo/<id>/")
+    s_sim = sub.add_parser("similitud", help="03_items.jsonl -> 04_similitud.json")
+    s_sim.add_argument("materia", help="id de la materia en trabajo/<id>/")
     for nombre, (_fase, ayuda) in PENDIENTES.items():
         s = sub.add_parser(nombre, help=ayuda)
         s.add_argument("args", nargs="*")
@@ -109,6 +110,23 @@ def main(argv: list[str] | None = None) -> int:
         print(
             f"Total: {len(etiquetables)} ítems etiquetables en trabajo/{a.materia}/03_items.jsonl"
         )
+        return 0
+    if a.cmd == "similitud":
+        ruta_items = Path("trabajo") / a.materia / "03_items.jsonl"
+        if not ruta_items.is_file():
+            print(f"Error: no existe {ruta_items}", file=sys.stderr)
+            return 1
+        from analisis_profesor.similitud import calcular_similitud
+
+        res = calcular_similitud(a.materia)
+        lb = res["linea_base"]
+        print(
+            f"Línea base material (n_pares={lb['n_pares']}): "
+            f"media={lb['media']:.3f}, p95={lb['p95']:.3f}"
+        )
+        for qid, entrada in res["preguntas_examen"].items():
+            cand, sim = entrada["mas_parecidos"][0] if entrada["mas_parecidos"] else ("-", 0.0)
+            print(f"  {qid} -> {cand} ({sim:.3f}) [{entrada['clasificacion']}]")
         return 0
     fase, _ = PENDIENTES[a.cmd]
     print(f"PENDIENTE: `{a.cmd}` se implementa en la {fase} (docs/ROADMAP.md). "
