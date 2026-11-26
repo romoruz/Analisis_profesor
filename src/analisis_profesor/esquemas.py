@@ -69,6 +69,8 @@ class Etiqueta:
     dok: int | None = None
     minutos: float | None = None
     pasada: int = 1                 # 1 o 2: doble etiquetado para medir consistencia
+    puntos: float | None = None
+    examinable: bool = True
 
     def __post_init__(self):
         _en(self.nivel, NIVELES_RECICLAJE, "nivel")

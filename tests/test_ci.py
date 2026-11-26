@@ -8,7 +8,16 @@ from pathlib import Path
 RAIZ = Path(__file__).resolve().parents[1]
 SDKS_PROHIBIDOS = frozenset({"openai", "anthropic", "google", "genai", "litellm"})
 ARCHIVOS_SOLO_STDLIB = frozenset(
-    {"ap.py", "__init__.py", "cli.py", "esquemas.py", "segmentacion.py", "similitud.py"}
+    {
+        "ap.py",
+        "__init__.py",
+        "cli.py",
+        "config.py",
+        "esquemas.py",
+        "etiquetas.py",
+        "segmentacion.py",
+        "similitud.py",
+    }
 )
 
 
