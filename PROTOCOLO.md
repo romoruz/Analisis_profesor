@@ -5,7 +5,7 @@
 > transcribir, etiquetar y redactar. Los scripts de `ap.py` hacen las cuentas (similitud,
 > estadística, sorteo) para que sean reproducibles y no inventadas.
 
-Versión del protocolo: 6
+Versión del protocolo: 7
 
 ---
 
@@ -53,7 +53,7 @@ Esto crea `trabajo/<id>/` con:
 
 - `00_crudo/`: el zip descomprimido.
 - `01_inventario.csv`: una fila por archivo con `tipo` adivinado (examen, tarea, clase, notas,
-  temario, pauta), fecha y parcial.
+  temario, pauta, otro), fecha y parcial.
 - `02_texto/<doc>.md`: el texto extraído de cada PDF con capa de texto.
 - `pendientes_transcripcion.txt`: fotos, escaneos y PDFs sin texto, o con fórmulas rotas.
 
@@ -206,7 +206,10 @@ verificacion: |
 ```
 
 - `nivel:` indica la distancia al material original (`casi copia`, `adaptación` o `nueva`);
-  es opcional y ayuda a balancear el armado.
+  es obligatorio para que `armar` pueda llenar cada hueco al nivel pedido por el sorteo.
+  Para todo arquetipo con probabilidad ≥ 0.2, cubre **los tres niveles** (al menos un
+  ejercicio de cada uno), y añade ejercicios adicionales en los niveles más frecuentes de los
+  arquetipos con mayor probabilidad.
 - `familia:` identifica variantes estructuralmente análogas para penalizar que aparezcan en
   simulacros distintos (opcional; por defecto toma el valor de `basado_en` o el id).
 - En ejercicios puramente demostrativos, escribe `verificacion: manual` en una línea.

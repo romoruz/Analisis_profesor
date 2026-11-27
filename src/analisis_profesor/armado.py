@@ -79,7 +79,7 @@ def _seleccionar_pool_pregunta(
     usados: set[str],
     tolerancia: float,
     num_simulacro: int,
-) -> tuple[list[_CandidatoArmado], str | None]:
+) -> tuple[list[_CandidatoArmado], str | None, str | None]:
     niv_norm = normalizar_nivel(nivel)
     estricto = [
         c
@@ -90,7 +90,7 @@ def _seleccionar_pool_pregunta(
         and abs(c.score - objetivo_k) <= tolerancia
     ]
     if estricto:
-        return estricto, None
+        return estricto, None, None
 
     aviso = (
         f"simulacro {num_simulacro}, arquetipo {arquetipo} nivel {nivel}: "
@@ -104,15 +104,15 @@ def _seleccionar_pool_pregunta(
         and abs(c.score - objetivo_k) <= tolerancia
     ]
     if sin_nivel:
-        return sin_nivel, aviso
+        return sin_nivel, f"{aviso} (sin nivel)", "nivel"
 
     sin_banda = [c for c in cands if c.ej.arquetipo == arquetipo and c.ej.id not in usados]
     if sin_banda:
-        return sin_banda, aviso
+        return sin_banda, f"{aviso} (sin nivel ni banda)", "nivel_y_banda"
 
     mismo_arq = [c for c in cands if c.ej.arquetipo == arquetipo]
     if mismo_arq:
-        return mismo_arq, aviso + " (reutilizado)"
+        return mismo_arq, f"{aviso} (reutilizado)", "reutilizado"
     raise ValueError(f"No hay ejercicios verificados disponibles para el arquetipo {arquetipo!r}")
 
 
@@ -178,19 +178,24 @@ def armar_simulacros(
     usados: set[str] = set()
     familias: set[str] = set()
     avisos: list[str] = []
+    relajaciones_tipo: dict[str, int] = {"nivel": 0, "nivel_y_banda": 0, "reutilizado": 0}
+    n_huecos_totales = 0
     examenes: list[dict] = []
 
     for num, sorteo in enumerate(sorteos, 1):
         opciones: list[list[_CandidatoArmado]] = []
         for q in sorteo["preguntas"]:
+            n_huecos_totales += 1
             k = str(q["arquetipo"])
             niv = str(q.get("nivel", ""))
             obj_k = objetivos.get(k, 0.0)
-            pool, aviso = _seleccionar_pool_pregunta(
+            pool, aviso, tipo_rel = _seleccionar_pool_pregunta(
                 cands, k, niv, obj_k, usados, tolerancia, num
             )
             if aviso:
                 avisos.append(aviso)
+            if tipo_rel:
+                relajaciones_tipo[tipo_rel] = relajaciones_tipo.get(tipo_rel, 0) + 1
             opciones.append(pool)
 
         mejor: tuple[_CandidatoArmado, ...] | None = None
@@ -249,12 +254,17 @@ def armar_simulacros(
             }
         )
 
+    n_relajados = len(avisos)
     salida = {
         "materia": materia,
         "semilla": semilla,
         "meta_dificultad_total": round(meta, 2),
         "tolerancia": tolerancia,
         "n_candidatos_verificados": len(cands),
+        "n_huecos_totales": n_huecos_totales,
+        "n_huecos_relajados": n_relajados,
+        "n_huecos_nivel_relajado": relajaciones_tipo["nivel"] + relajaciones_tipo["nivel_y_banda"],
+        "relajaciones_por_tipo": relajaciones_tipo,
         "avisos_relajacion": avisos,
         "examenes": examenes,
     }

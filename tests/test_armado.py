@@ -102,6 +102,9 @@ def test_regresion_exacta_legacy_simulacros_sd2(tmp_path: Path):
     assert out["meta_dificultad_total"] == ref["meta_dificultad_total"] == 12.82
     assert out["tolerancia"] == ref["tolerancia"] == 1.0
     assert len(out["examenes"]) == len(ref["examenes"]) == 5
+    assert out["n_huecos_totales"] == 20
+    assert out["n_huecos_relajados"] == 0
+    assert out["n_huecos_nivel_relajado"] == 0
 
     claves_legacy = ("id", "arq", "nivel", "score", "objetivo", "tex")
     for ex_out, ex_ref in zip(out["examenes"], ref["examenes"], strict=True):
@@ -212,3 +215,46 @@ def test_armar_mini_reproducible_sin_fuga_soluciones_cli_y_respaldo_puro(
     assert "SOLUCIONES.md" in salida
     if pdflatex_funcional():
         assert (ent / "simulacros.pdf").is_file()
+
+
+def test_armar_reporta_huecos_relajados_cuando_faltan_niveles(
+    mini_dir: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+):
+    from analisis_profesor.armado import armar_simulacros
+    from analisis_profesor.banco import escribir_banco, leer_banco, verificar_banco
+    from analisis_profesor.dificultad import calcular_dificultad
+    from analisis_profesor.modelo import calcular_modelo
+
+    raiz_trabajo = tmp_path / "trabajo"
+    carpeta = raiz_trabajo / "mini"
+    shutil.copytree(mini_dir, carpeta)
+
+    # Eliminamos el nivel "nueva" de A y C en el banco para forzar relajación al armar
+    ejercicios = leer_banco(carpeta / "08_banco.md")
+    for ej in ejercicios:
+        if ej.arquetipo in ("A", "C") and ej.nivel == "nueva":
+            ej.nivel = "casi copia"
+    escribir_banco(ejercicios, carpeta / "08_banco.md")
+
+    calcular_dificultad("mini", raiz_trabajo=raiz_trabajo, semilla=2026)
+    calcular_modelo(
+        "mini", raiz_trabajo=raiz_trabajo, semilla=2026, n_simulaciones=2000, n_rejilla=300
+    )
+    verif = verificar_banco("mini", raiz_trabajo=raiz_trabajo, timeout_s=10.0)
+    assert verif["niveles_faltantes_por_arquetipo"] == {"A": ["nueva"], "C": ["nueva"]}
+
+    res = armar_simulacros(
+        "mini", raiz_trabajo=raiz_trabajo, semilla=2026, n_simulacros=5, compilar_pdf=False
+    )
+    assert res["n_huecos_totales"] == 20
+    assert res["n_huecos_relajados"] >= 2
+    assert res["n_huecos_nivel_relajado"] >= 2
+    assert res["n_huecos_relajados"] == len(res["avisos_relajacion"])
+    assert sum(res["relajaciones_por_tipo"].values()) == res["n_huecos_relajados"]
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["armar", "mini", "--n", "5", "--semilla", "2026", "--sin-pdf"]) == 0
+    salida = capsys.readouterr().out
+    assert (
+        f"Huecos relajados: {res['n_huecos_relajados']}/{res['n_huecos_totales']}" in salida
+    )
