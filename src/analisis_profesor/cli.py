@@ -17,7 +17,6 @@ from analisis_profesor import __version__
 
 PENDIENTES = {
     "acuerdo": ("Fase 3", "consistencia entre las dos pasadas de etiquetado"),
-    "armar": ("Fase 1", "-> entregables/SIMULACROS.md, SOLUCIONES.md, simulacros.tex"),
 }
 
 LIBRERIAS = {  # nombre de import: para qué sirve
@@ -81,6 +80,12 @@ def main(argv: list[str] | None = None) -> int:
     s_ver.add_argument("materia", help="id de la materia en trabajo/<id>/")
     s_ver.add_argument("--timeout", type=float, default=15.0, help="límite por ejercicio (s)")
     s_ver.add_argument("--id", dest="ids", action="append", help="solo verificar IDs indicados")
+    s_arm = sub.add_parser("armar", help="arma simulacros y genera entregables")
+    s_arm.add_argument("materia", help="id de la materia en trabajo/<id>/")
+    s_arm.add_argument("--n", type=int, default=5, help="número de simulacros a generar")
+    s_arm.add_argument("--semilla", type=int, default=2026, help="semilla para desempate")
+    s_arm.add_argument("--tolerancia", type=float, default=1.0, help="banda ± de dificultad")
+    s_arm.add_argument("--sin-pdf", action="store_true", help="no compilar simulacros.tex a PDF")
     for nombre, (_fase, ayuda) in PENDIENTES.items():
         s = sub.add_parser(nombre, help=ayuda)
         s.add_argument("args", nargs="*")
@@ -218,6 +223,36 @@ def main(argv: list[str] | None = None) -> int:
             f"{res['automaticos_fallidos']} fallidos)."
         )
         return 0 if res["todos_ok"] else 1
+    if a.cmd == "armar":
+        ruta_banco = Path("trabajo") / a.materia / "08_banco.md"
+        if not ruta_banco.is_file():
+            print(f"Error: no existe {ruta_banco}", file=sys.stderr)
+            return 1
+        from analisis_profesor.armado import armar_simulacros
+
+        res = armar_simulacros(
+            a.materia,
+            n_simulacros=a.n,
+            semilla=a.semilla,
+            tolerancia=a.tolerancia,
+            compilar_pdf=not a.sin_pdf,
+        )
+        print(
+            f"Simulacros armados en trabajo/{a.materia}/simulacros.json "
+            f"(meta={res['meta_dificultad_total']:.2f}, n={len(res['examenes'])}):"
+        )
+        for ex in res["examenes"]:
+            ids_str = " ".join(f"{q['arq']}:{q['id']}" for q in ex["preguntas"])
+            print(
+                f"  Simulacro {ex['numero']} ({ex['minutos']} min, "
+                f"dificultad={ex['dificultad_total']:.2f}): {ids_str}"
+            )
+        ent = res["entregables"]
+        print(
+            f"Entregables: SIMULACROS.md, SOLUCIONES.md, simulacros.tex"
+            f"{', simulacros.pdf' if ent.get('pdf_generado') else ''}"
+        )
+        return 0
     fase, _ = PENDIENTES[a.cmd]
     print(f"PENDIENTE: `{a.cmd}` se implementa en la {fase} (docs/ROADMAP.md). "
           "Mientras tanto, haz este paso a mano según el Anexo C de PROTOCOLO.md.")

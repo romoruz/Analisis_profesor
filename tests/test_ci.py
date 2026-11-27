@@ -16,6 +16,7 @@ ARCHIVOS_SOLO_STDLIB = frozenset(
         "config.py",
         "esquemas.py",
         "etiquetas.py",
+        "salida.py",
         "segmentacion.py",
         "similitud.py",
     }
