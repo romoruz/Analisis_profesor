@@ -8,7 +8,7 @@ import pytest
 
 from analisis_profesor.cli import main
 from analisis_profesor.config import RASGOS_LEGACY_SD2, leer_config_materia
-from analisis_profesor.esquemas import Prediccion
+from analisis_profesor.esquemas import Etiqueta, Prediccion
 from analisis_profesor.etiquetas import convertir_legacy_csv
 from analisis_profesor.segmentacion import segmentar_carpeta
 from analisis_profesor.similitud import calcular_similitud
@@ -313,3 +313,80 @@ def test_media_muestras_ic_contra_p_base_mini_y_sd2(mini_dir: Path, tmp_path: Pa
     for k in res_sd2["K"]:
         assert abs(res_sd2["p_muestras_media"][k] - res_sd2["p_base"][k]) <= 0.03
         assert 0.0 <= res_sd2["p_q05"][k] <= res_sd2["p_base"][k] <= res_sd2["p_q95"][k] <= 1.0
+
+
+def test_rotacion_solo_semestre_en_curso_ignora_examen_viejo_otro_parcial():
+    from analisis_profesor.modelo import (
+        construir_cfg_desde_etiquetas,
+        corre,
+        examen_en_semestre_actual,
+    )
+
+    assert examen_en_semestre_actual("2026-10-19", semestre="2026-II") is True
+    assert examen_en_semestre_actual("2026-03-04", semestre="2026-II") is False
+    assert examen_en_semestre_actual("2026-03-04", semestre="2026-I") is True
+    assert examen_en_semestre_actual("2025-10-19", semestre="2026-I") is False
+    assert examen_en_semestre_actual("2026-08-20", inicio_semestre="2026-08-15") is True
+    assert examen_en_semestre_actual("2026-05-04", inicio_semestre="2026-08-15") is False
+    assert examen_en_semestre_actual("", semestre="2026-II") is False
+
+    rasgos = {"r": (1.0, 0, 5)}
+    cfg_mat = {
+        "id": "prueba_rot",
+        "semestre": "2026-II",
+        "objetivo": {
+            "parcial": "P3",
+            "fecha": "2026-11-25",
+            "molde": ["P3_2025-11-20"],
+            "ya_examinado_este_semestre": [],
+            "inicio_semestre": "",
+        },
+        "formato": {"preguntas": {"2": 1.0}, "minutos": [30, 50]},
+        "arquetipos": {
+            "A": ("Tema A", 20),
+            "B": ("Tema B", 20),
+            "C": ("Tema C", 20),
+            "D": ("Tema D", 20),
+        },
+        "rasgos": rasgos,
+        "modelo": {"semilla": 2026, "beta": 6.0, "suavizado": 0.3, "rho": 0.6},
+    }
+    base_et = [
+        Etiqueta(item_id="T1:1", arquetipo="A", rasgos={"r": 1}),
+        Etiqueta(item_id="T1:2", arquetipo="B", rasgos={"r": 1}),
+        Etiqueta(item_id="T1:3", arquetipo="C", rasgos={"r": 1}),
+        Etiqueta(item_id="T1:4", arquetipo="D", rasgos={"r": 1}),
+        Etiqueta(item_id="P3_2025-11-20:Q1", arquetipo="A", fuente="T1:1", nivel="adaptación"),
+        Etiqueta(item_id="P3_2025-11-20:Q2", arquetipo="B", fuente="T1:2", nivel="adaptación"),
+        # Examen viejo de otro parcial y semestre anterior (2026-I): NO debe rotar
+        Etiqueta(item_id="P1_2026-03-04:Q1", arquetipo="A", fuente="T1:1", nivel="casi copia"),
+        # Examen reciente del semestre en curso (2026-II): SÍ debe rotar
+        Etiqueta(item_id="P2_2026-10-19:Q1", arquetipo="D", fuente="T1:4", nivel="adaptación"),
+    ]
+    cfg_calc, deriv = construir_cfg_desde_etiquetas(cfg_mat, base_et)
+    assert cfg_calc["rotacion"] == ["D"]
+    assert "A" not in cfg_calc["rotacion"]
+    assert deriv["examenes_rotacion"] == ["P2_2026-10-19"]
+
+    # Con inicio_semestre explícito en 2026-09-01: 2026-05-04 tampoco rota, 2026-09-10 sí
+    cfg_mat_ini = {
+        **cfg_mat,
+        "semestre": "",
+        "objetivo": {**cfg_mat["objetivo"], "inicio_semestre": "2026-09-01"},
+    }
+    et_ini = base_et[:-2] + [
+        Etiqueta(item_id="P1_2026-05-04:Q1", arquetipo="C", fuente="T1:3", nivel="adaptación"),
+        Etiqueta(item_id="P2_2026-09-10:Q1", arquetipo="D", fuente="T1:4", nivel="adaptación"),
+    ]
+    cfg_ini, deriv_ini = construir_cfg_desde_etiquetas(cfg_mat_ini, et_ini)
+    assert cfg_ini["rotacion"] == ["D"]
+    assert deriv_ini["examenes_rotacion"] == ["P2_2026-09-10"]
+
+    # Verifica que A no queda castigado en el modelo final respecto a no tener P1_2026-03-04
+    res_con_viejo = corre(cfg_calc, R=4000, R_rejilla=0, semilla=2026, malla=None)
+    cfg_sin_viejo, _ = construir_cfg_desde_etiquetas(
+        cfg_mat, [e for e in base_et if not e.item_id.startswith("P1_2026-03-04:")]
+    )
+    assert cfg_sin_viejo["rotacion"] == cfg_calc["rotacion"]
+    res_sin_viejo = corre(cfg_sin_viejo, R=4000, R_rejilla=0, semilla=2026, malla=None)
+    assert abs(res_con_viejo["p_base"]["A"] - res_sin_viejo["p_base"]["A"]) <= 0.02
