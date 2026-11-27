@@ -150,6 +150,26 @@ probar el protocolo.
 - [ ] 2.3 Protocolo v2 con las correcciones. Cada fricción se vuelve una regla o un script.
 - [ ] 2.4 **Primera materia nueva real** con la plataforma que mejor funcionó.
 
+
+### Resultados de la primera ronda (2026-11-27) y tareas que salen de ella
+
+- **Claude.ai:** funciona de punta a punta en modo completo, con las matemáticas correctas (20 de
+  20 preguntas revisadas). Pero no fue a ciegas: recibió el zip con análisis previos. Ver
+  `docs/pruebas_chat/claude_chat_2026-11-27.md`.
+- **Gemini:** no siguió el protocolo e inventó temas desde la memoria del usuario. Ver
+  `docs/pruebas_chat/gemini_2026-11-27.md`. De ahí sale el protocolo v6: solo el zip, ficha de
+  ejecución, evidencia por tema y no leer análisis previos.
+- [ ] 2.5 `ap.py acuerdo` (adelanta la 3.1): Claude tuvo que hacerlo a mano.
+- [ ] 2.6 Rotación: hoy `modelo.py` castiga los arquetipos de **cualquier** examen que no sea
+      molde. Debe castigar solo los del semestre en curso (`materia.toml: semestre`, o la fecha
+      ≥ inicio de semestre).
+      *Acepta:* test con un examen viejo de otro parcial que no rota.
+- [ ] 2.7 Armado: si el banco no tiene el nivel pedido (casi copia, adaptación o nueva), el
+      protocolo §7 pide cubrir los tres niveles por arquetipo, y `armar` reporta cuántos huecos
+      relajó.
+- [ ] 2.8 `ap.py validar-guia`: comprueba que los ids citados en la guía existen en
+      `03_items.jsonl` y que las cifras de la tabla de temas coinciden con `07_modelo.json`.
+
 ## Fase 3: Extracción y etiquetado de calidad
 
 - [ ] 3.1 `acuerdo`: α de Krippendorff ordinal entre las dos pasadas del paso 5.2 (y contra
