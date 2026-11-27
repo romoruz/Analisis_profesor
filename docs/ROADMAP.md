@@ -97,7 +97,7 @@ SD-II, reproduce los resultados de `legacy/`.
 - [x] 1.9 `verificar`: lee `08_banco.md`, ejecuta cada bloque `verificacion` en un subproceso con
       timeout y escribe el estado.
       *Acepta:* el banco de SD-II convertido da 38 automáticos + 6 manuales = 44/44 en total.
-- [ ] 1.10 `armar`: portar `05_armar_simulacros.py` (banda de dificultad, sorteo balanceado) y
+- [x] 1.10 `armar`: portar `05_armar_simulacros.py` (banda de dificultad, sorteo balanceado) y
       escribir `SIMULACROS.md`, `SOLUCIONES.md` y `simulacros.tex` (más PDF si hay `pdflatex`).
       *Acepta:* mismos 5 simulacros que `legacy/.../salidas/simulacros.json` con la misma
       semilla.
