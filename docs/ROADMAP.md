@@ -170,6 +170,26 @@ probar el protocolo.
 - [x] 2.8 `ap.py validar-guia`: comprueba que los ids citados en la guía existen en
       `03_items.jsonl` y que las cifras de la tabla de temas coinciden con `07_modelo.json`.
 
+### Ronda 2 (protocolo v7, a ciegas): Claude y Gemini aptos
+
+Ver `docs/pruebas_chat/ronda2_2026-11-27.md`. Las cifras de los dos chats se reproducen con
+`main`. Tareas que salen:
+
+- [ ] 2.9 **Arquetipos estables por materia.** Si existe `materias/<id>/materia.toml` aprobado
+      (o el usuario sube uno), el protocolo lo usa en vez de inventar arquetipos nuevos. Así las
+      probabilidades son comparables entre corridas y chats. Agregar `materias/sd2/materia.toml`
+      con los 10 arquetipos de legacy.
+      *Acepta:* dos corridas con el mismo `materia.toml` dan las mismas claves K.
+- [ ] 2.10 **Procedencia de las salidas.** Cada JSON (`04`, `06`, `07`, `simulacros`) guarda el
+      sha256 de sus entradas; `validar-guia` marca como desfasada cualquier salida cuyas entradas
+      cambiaron después.
+      *Acepta:* editar `05_etiquetas.csv` después de `dificultad` hace fallar `validar-guia`.
+- [ ] 2.11 **Ventana de minutos con holgura.** Cuando la ventana se deduce de los moldes, usar
+      [0.8·mín, 1.15·máx] de sus minutos estimados, y reportar en `07_modelo.json` la tasa de
+      aceptación. Si es < 5 %, dar un aviso.
+      *Acepta:* con moldes de 90 y 90 minutos, la tasa de aceptación es > 20 % sin editar a mano.
+- [ ] 2.12 Prueba en ChatGPT con el mismo material.
+
 ## Fase 3: Extracción y etiquetado de calidad
 
 - [x] 3.1 `acuerdo`: α de Krippendorff ordinal entre las dos pasadas del paso 5.2 (y contra
