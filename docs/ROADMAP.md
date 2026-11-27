@@ -184,7 +184,7 @@ Ver `docs/pruebas_chat/ronda2_2026-11-27.md`. Las cifras de los dos chats se rep
       sha256 de sus entradas; `validar-guia` marca como desfasada cualquier salida cuyas entradas
       cambiaron después.
       *Acepta:* editar `05_etiquetas.csv` después de `dificultad` hace fallar `validar-guia`.
-- [ ] 2.11 **Ventana de minutos con holgura.** Cuando la ventana se deduce de los moldes, usar
+- [x] 2.11 **Ventana de minutos con holgura.** Cuando la ventana se deduce de los moldes, usar
       [0.8·mín, 1.15·máx] de sus minutos estimados, y reportar en `07_modelo.json` la tasa de
       aceptación. Si es < 5 %, dar un aviso.
       *Acepta:* con moldes de 90 y 90 minutos, la tasa de aceptación es > 20 % sin editar a mano.

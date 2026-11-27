@@ -278,7 +278,7 @@ def leer_config_materia(ruta_o_carpeta: Path) -> dict[str, Any]:
     preguntas_raw = formato_raw.get("preguntas") or {"4": 1.0}
     formato = {
         "preguntas": {str(k): float(v) for k, v in preguntas_raw.items()},
-        "minutos": [float(m) for m in formato_raw.get("minutos", [75, 100])],
+        "minutos": [float(m) for m in formato_raw.get("minutos", [])],
         "puntos_por_pregunta": [float(p) for p in formato_raw.get("puntos_por_pregunta", [])],
     }
 
