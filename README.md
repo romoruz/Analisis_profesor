@@ -23,7 +23,9 @@ No hacen falta API keys. La IA del chat (Claude, ChatGPT, Gemini o Antigravity) 
 
 > Descomprime `Analisis_profesor-main.zip` y sigue su `PROTOCOLO.md` paso a paso con mi
 > material (`<mi_material>.zip`). Materia: ___. Viene el parcial ___ el ___, temas: ___.
-> Al final dame `GUIA_PARCIAL.md`, `SIMULACROS.md` y `SOLUCIONES.md`.
+> Usa solo estos archivos (no tu memoria ni otras conversaciones). Si no puedes ejecutar código,
+> dímelo al inicio. Al final dame `GUIA_PARCIAL.md`, `SIMULACROS.md`, `SOLUCIONES.md` y el zip de
+> `trabajo/`.
 
 Si el chat puede navegar pero no recibe archivos de código, basta con el enlace al protocolo:
 `https://raw.githubusercontent.com/romoruz/Analisis_profesor/main/PROTOCOLO.md`. El chat

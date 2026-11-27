@@ -5,7 +5,7 @@
 > transcribir, etiquetar y redactar. Los scripts de `ap.py` hacen las cuentas (similitud,
 > estadística, sorteo) para que sean reproducibles y no inventadas.
 
-Versión del protocolo: 5
+Versión del protocolo: 6
 
 ---
 
@@ -237,15 +237,21 @@ exámenes "molde". Escribe:
 ## 9. Guía del parcial (tú)
 
 Escribe `entregables/GUIA_PARCIAL.md` con `plantillas/GUIA_PARCIAL.md`. Toda cifra sale de los
-JSON de `trabajo/<id>/`; no inventes números. Secciones:
+JSON de `trabajo/<id>/`, con el mismo nivel de intervalo que trae el JSON; no inventes números ni
+cambies el nivel de confianza. Secciones:
 
+0. **Ficha de ejecución** (obligatoria, al inicio):
+   - versión del protocolo y modo (completo, reducido o sin código);
+   - pasos [script] ejecutados y pasos hechos a mano;
+   - archivos del zip usados y archivos ignorados.
 1. **Qué entra y qué supuse.**
 2. **Cómo examina este profe:**
    - recicla o no, y de dónde (con los pares de similitud más fuertes);
    - examen más fácil o más difícil que la tarea (delta con su intervalo);
    - cuántas preguntas, cuántos minutos, si pone demostración.
-3. **Temas por probabilidad**, en tabla con intervalo. Ordénalos por el mínimo de sensibilidad
-   ("lo más seguro").
+3. **Temas por probabilidad**, en tabla con intervalo y con la columna "evidencia" (ids de ítems
+   de examen o tarea de ese arquetipo). Ordénalos por el mínimo de sensibilidad ("lo más
+   seguro").
 4. **Lista de estudio literal:** ejercicios de tarea y de exámenes viejos que hay que saber hacer
    tal cual, por la evidencia de reciclaje.
 5. **Plan de estudio** por días hasta la fecha del examen: material literal primero, después
@@ -261,13 +267,22 @@ Dale al usuario los archivos de `entregables/`:
 - `SIMULACROS.md` (o el PDF)
 - `SOLUCIONES.md`
 
-Dile que abra las soluciones solo después de hacer cada simulacro. Si el entorno lo permite,
-ofrece un zip de `trabajo/<id>/` para que pueda retomar el análisis en otro chat.
+Dile que abra las soluciones solo después de hacer cada simulacro. Entrega también un zip de
+`trabajo/<id>/` (sin `00_crudo/`): sirve para auditar el análisis y para retomarlo en otro chat.
 
 ---
 
 ## Reglas
 
+- **Solo el zip.** Usa únicamente los archivos que te dio el usuario en esta conversación. No uses
+  tu memoria del usuario, otras conversaciones, proyectos suyos ni lo que "suele" venir en un
+  curso con ese nombre. Todo tema, pregunta o afirmación sobre el profe en la guía debe citar al
+  menos un id de `03_items.jsonl` como evidencia; si no lo puedes citar, no lo escribas.
+- **No leas análisis previos.** Si el zip trae resultados de análisis anteriores (carpetas
+  `salidas/`, guías, simulacros, `.json` de resultados, documentos tipo `MEJORAS_Y_USO`),
+  márcalos `tipo=otro` en el inventario, no los abras y anótalo en `supuestos.md`.
+- **No simules el protocolo.** Si no pudiste correr un paso [script], dilo en tu primer mensaje y
+  en la ficha de ejecución; nunca presentes cifras como si vinieran de los scripts.
 - **No inventes material:** ni preguntas de examen, ni fechas, ni calificaciones. Si algo no está
   en el zip, es un supuesto y va en `supuestos.md`.
 - **Las cifras las dan los scripts.** En modo sin código, di explícitamente que son
