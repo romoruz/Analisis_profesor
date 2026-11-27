@@ -329,6 +329,12 @@ def test_rotacion_solo_semestre_en_curso_ignora_examen_viejo_otro_parcial():
     assert examen_en_semestre_actual("2026-08-20", inicio_semestre="2026-08-15") is True
     assert examen_en_semestre_actual("2026-05-04", inicio_semestre="2026-08-15") is False
     assert examen_en_semestre_actual("", semestre="2026-II") is False
+    # Nombres de periodo antes del año
+    assert examen_en_semestre_actual("2026-10-19", semestre="Otoño 2026") is True
+    assert examen_en_semestre_actual("2026-03-04", semestre="Otoño 2026") is False
+    assert examen_en_semestre_actual("2027-03-10", semestre="Primavera 2027") is True
+    assert examen_en_semestre_actual("2027-09-10", semestre="Primavera 2027") is False
+    assert examen_en_semestre_actual("2026-10-19", semestre="semestre raro") is False
 
     rasgos = {"r": (1.0, 0, 5)}
     cfg_mat = {
@@ -390,3 +396,12 @@ def test_rotacion_solo_semestre_en_curso_ignora_examen_viejo_otro_parcial():
     assert cfg_sin_viejo["rotacion"] == cfg_calc["rotacion"]
     res_sin_viejo = corre(cfg_sin_viejo, R=4000, R_rejilla=0, semilla=2026, malla=None)
     assert abs(res_con_viejo["p_base"]["A"] - res_sin_viejo["p_base"]["A"]) <= 0.02
+
+    # Si `semestre` no está vacío pero no es interpretable, debe emitir aviso en derivación
+    cfg_raro = {**cfg_mat, "semestre": "Cuatrimestre Z"}
+    cfg_out_raro, deriv_raro = construir_cfg_desde_etiquetas(cfg_raro, base_et)
+    assert deriv_raro["avisos_rotacion"]
+    assert "Cuatrimestre Z" in deriv_raro["avisos_rotacion"][0]
+    assert deriv_raro["examenes_rotacion"] == []
+    assert cfg_out_raro["rotacion"] == []
+    assert deriv["avisos_rotacion"] == []

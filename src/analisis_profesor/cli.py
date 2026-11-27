@@ -15,9 +15,7 @@ from pathlib import Path
 
 from analisis_profesor import __version__
 
-PENDIENTES = {
-    "acuerdo": ("Fase 3", "consistencia entre las dos pasadas de etiquetado"),
-}
+PENDIENTES: dict[str, tuple[str, str]] = {}
 
 LIBRERIAS = {  # nombre de import: para qué sirve
     "numpy": "obligatoria para el modo completo",
@@ -67,6 +65,10 @@ def main(argv: list[str] | None = None) -> int:
     s_plant.add_argument(
         "--sobrescribir", action="store_true", help="regenera todas las filas desde cero"
     )
+    s_acu = sub.add_parser("acuerdo", help="consistencia entre pasadas de 05_etiquetas.csv")
+    s_acu.add_argument("materia", help="id de la materia en trabajo/<id>/")
+    s_acu.add_argument("--contra", default=None, help="CSV externo para comparar contra pasada 1")
+    s_acu.add_argument("--semilla", type=int, default=2026, help="semilla bootstrap")
     s_dif = sub.add_parser("dificultad", help="05_etiquetas.csv -> 06_dificultad.json")
     s_dif.add_argument("materia", help="id de la materia en trabajo/<id>/")
     s_dif.add_argument("--semilla", type=int, default=2026, help="semilla bootstrap/permutación")
@@ -162,6 +164,36 @@ def main(argv: list[str] | None = None) -> int:
         n_filas = len(leer_etiquetas(ruta_csv, rasgos=rasgos))
         print(f"Plantilla escrita en {ruta_csv} ({n_filas} ítems).")
         return 0
+    if a.cmd == "acuerdo":
+        ruta_etiq = Path("trabajo") / a.materia / "05_etiquetas.csv"
+        if not ruta_etiq.is_file():
+            print(f"Error: no existe {ruta_etiq}", file=sys.stderr)
+            return 1
+        ruta_contra = Path(a.contra) if a.contra else None
+        if ruta_contra is not None and not ruta_contra.is_file():
+            print(f"Error: no existe {ruta_contra}", file=sys.stderr)
+            return 1
+        from analisis_profesor.acuerdo import calcular_acuerdo
+
+        res = calcular_acuerdo(a.materia, ruta_contra=ruta_contra, semilla=a.semilla)
+        if res["n_items"] < 2:
+            print(
+                f"Error: solo hay {res['n_items']} ítems emparejados; agrega filas con "
+                "`pasada=2` en 05_etiquetas.csv o usa `--contra <archivo.csv>`.",
+                file=sys.stderr,
+            )
+            return 1
+        print(
+            f"Acuerdo calculado en trabajo/{a.materia}/05_acuerdo.json "
+            f"(n={res['n_items']}, exploratorio={res['exploratorio']}, "
+            f"inestables={res['rasgos_inestables']}):"
+        )
+        for campo, info in res["por_campo"].items():
+            print(
+                f"  {campo}: alpha={info['alfa']:.3f} IC={info['ic_bootstrap']} "
+                f"[{info['clasificacion']}]"
+            )
+        return 0
     if a.cmd == "dificultad":
         ruta_etiq = Path("trabajo") / a.materia / "05_etiquetas.csv"
         if not ruta_etiq.is_file():
@@ -198,6 +230,8 @@ def main(argv: list[str] | None = None) -> int:
             f"(R={res['n_simulaciones']}, molde={res['n_examenes_molde']}, "
             f"p_dem={res['probabilidad_demostracion']:.3f}):"
         )
+        for aviso in res.get("parametros_derivados", {}).get("avisos_rotacion", []):
+            print(f"  Aviso rotación: {aviso}")
         for p_item in sorted(res["predicciones"], key=lambda d: -d["p_media"]):
             print(
                 f"  {p_item['arquetipo']}: base={p_item['p_media']:.3f} "

@@ -760,3 +760,175 @@ def intervalo_jeffreys(
         "metodo": "jeffreys",
         "exploratorio": total < 10,
     }
+
+
+def _ordenar_categorias_krippendorff(
+    valores: Sequence[object], orden_categorias: Sequence[object] | None
+) -> list[object]:
+    vistos: list[object] = []
+    for v in valores:
+        if v not in vistos:
+            vistos.append(v)
+    if orden_categorias is not None:
+        base = [c for c in orden_categorias if c in vistos]
+        extras = [c for c in vistos if c not in base]
+        return base + sorted(extras, key=str)
+    es_num = all(isinstance(v, int | float) and not isinstance(v, bool) for v in vistos)
+    return sorted(vistos, key=float if es_num else str)
+
+
+def _evaluar_alfa_desde_indices(
+    unidades_idx: Sequence[tuple[int, ...]], k: int, metrica: str
+) -> tuple[float, float, float, float, bool]:
+    matriz_o = [[0.0] * k for _ in range(k)]
+    pares_totales = 0
+    pares_iguales = 0
+    for unidad in unidades_idx:
+        m = len(unidad)
+        if m < 2:
+            continue
+        peso = 1.0 / (m - 1)
+        pares_totales += m * (m - 1)
+        for idx_a, ca in enumerate(unidad):
+            for idx_b, cb in enumerate(unidad):
+                if idx_a != idx_b:
+                    matriz_o[ca][cb] += peso
+                    if ca == cb:
+                        pares_iguales += 1
+
+    acuerdo_exacto = (pares_iguales / pares_totales) if pares_totales > 0 else 1.0
+    nc = [sum(fila) for fila in matriz_o]
+    n_total = sum(nc)
+    if n_total <= 1.0 or sum(1 for c in nc if c > 0.0) <= 1:
+        return 1.0, 0.0, 0.0, acuerdo_exacto, True
+
+    acum = [0.0] * (k + 1)
+    for idx in range(k):
+        acum[idx + 1] = acum[idx] + nc[idx]
+
+    d_obs_num = 0.0
+    d_esp_num = 0.0
+    for i in range(k):
+        for j in range(k):
+            if i == j:
+                continue
+            if metrica == "nominal":
+                delta2 = 1.0
+            elif metrica == "ordinal":
+                lo_idx, hi_idx = (i, j) if i < j else (j, i)
+                s_ij = (acum[hi_idx + 1] - acum[lo_idx]) - 0.5 * (nc[i] + nc[j])
+                delta2 = s_ij * s_ij
+            else:
+                raise ValueError(f"Métrica no soportada en Krippendorff: {metrica!r}")
+            d_obs_num += matriz_o[i][j] * delta2
+            d_esp_num += nc[i] * nc[j] * delta2
+
+    d_obs = d_obs_num / n_total
+    d_esp = d_esp_num / (n_total * (n_total - 1.0))
+    if d_esp <= 1e-15:
+        return 1.0, 0.0, 0.0, acuerdo_exacto, True
+    return 1.0 - (d_obs / d_esp), d_obs, d_esp, acuerdo_exacto, False
+
+
+def alfa_krippendorff(
+    unidades: Sequence[Sequence[object]],
+    *,
+    metrica: str = "ordinal",
+    orden_categorias: Sequence[object] | None = None,
+    nivel: float = 0.95,
+    n_remuestras: int = 2000,
+    semilla: int = 2026,
+    usar_numpy: bool | None = None,
+) -> dict:
+    """Coeficiente $\\alpha$ de Krippendorff para fiabilidad entre codificadores/pasadas.
+
+    Fuente: Krippendorff (2004; 2011, *Computing Krippendorff's Alpha-Reliability*);
+    `docs/METODOLOGIA_ESTADISTICA.md` §4 (umbrales ≥ 0.80 confiable, 0.67-0.80 tentativo,
+    < 0.67 inestable; `arXiv:2510.06658` en `docs/INVESTIGACION.md`). Soporta valores
+    faltantes (`None`, `""`), métrica `"nominal"` y `"ordinal"`, e IC bootstrap sobre unidades.
+    """
+    unidades_limpias: list[list[object]] = []
+    todos_vals: list[object] = []
+    for unidad in unidades:
+        limpia = [
+            v
+            for v in unidad
+            if v is not None
+            and v != ""
+            and not (isinstance(v, float) and math.isnan(v))
+        ]
+        if len(limpia) >= 2:
+            unidades_limpias.append(limpia)
+            todos_vals.extend(limpia)
+
+    n_u = len(unidades_limpias)
+    if n_u == 0:
+        return {
+            "n_unidades": 0,
+            "n_valores": 0,
+            "alfa": 0.0,
+            "acuerdo_exacto": 0.0,
+            "ic_bootstrap": [0.0, 0.0],
+            "nivel_ic": nivel,
+            "n_remuestras": 0,
+            "metrica": metrica,
+            "clasificacion": "sin_datos",
+            "varianza_nula": True,
+            "exploratorio": True,
+        }
+
+    cats = _ordenar_categorias_krippendorff(todos_vals, orden_categorias)
+    mapa = {c: idx for idx, c in enumerate(cats)}
+    unidades_idx = [tuple(mapa[v] for v in u) for u in unidades_limpias]
+    k = len(cats)
+
+    alfa_obs, _do, _de, acuerdo_ex, var_nula = _evaluar_alfa_desde_indices(
+        unidades_idx, k, metrica
+    )
+
+    alfas_boot: list[float] = []
+    if not var_nula and n_remuestras > 0 and n_u >= 2:
+        if _hay_numpy(usar_numpy):
+            rng = np.random.default_rng(semilla)
+            matriz_idx = rng.integers(0, n_u, size=(n_remuestras, n_u))
+            for fila in matriz_idx:
+                muestra = [unidades_idx[int(i)] for i in fila]
+                a_b, _, _, _, vn_b = _evaluar_alfa_desde_indices(muestra, k, metrica)
+                if not vn_b:
+                    alfas_boot.append(a_b)
+        else:
+            rng_py = random.Random(semilla)
+            for _ in range(n_remuestras):
+                muestra = [unidades_idx[rng_py.randrange(n_u)] for _ in range(n_u)]
+                a_b, _, _, _, vn_b = _evaluar_alfa_desde_indices(muestra, k, metrica)
+                if not vn_b:
+                    alfas_boot.append(a_b)
+
+    if alfas_boot:
+        orden_boot = sorted(alfas_boot)
+        alpha = (1.0 - nivel) / 2.0
+        ic_lo = _cuantil_lineal(orden_boot, alpha)
+        ic_hi = _cuantil_lineal(orden_boot, 1.0 - alpha)
+    else:
+        ic_lo = ic_hi = alfa_obs
+
+    if alfa_obs >= 0.80:
+        clasif = "confiable"
+    elif alfa_obs >= 0.67:
+        clasif = "tentativo"
+    else:
+        clasif = "inestable"
+
+    return {
+        "n_unidades": n_u,
+        "n_valores": len(todos_vals),
+        "alfa": float(alfa_obs),
+        "acuerdo_exacto": round(float(acuerdo_ex), 4),
+        "ic_bootstrap": [round(float(ic_lo), 4), round(float(ic_hi), 4)],
+        "nivel_ic": nivel,
+        "n_remuestras": len(alfas_boot),
+        "metrica": metrica,
+        "clasificacion": clasif,
+        "varianza_nula": var_nula,
+        "exploratorio": n_u < 10,
+    }

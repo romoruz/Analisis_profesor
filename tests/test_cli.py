@@ -13,8 +13,29 @@ def test_ap_py_sin_instalar():
     assert "Modo del PROTOCOLO" in r.stdout
 
 
-def test_pendiente_devuelve_2():
+def test_pendiente_devuelve_2(capsys):
     from analisis_profesor.cli import PENDIENTES, main
 
-    cmd = next(iter(PENDIENTES))
-    assert main([cmd, "x"]) == 2
+    if PENDIENTES:
+        cmd = next(iter(PENDIENTES))
+        assert main([cmd, "x"]) == 2
+        return
+
+    assert PENDIENTES == {}
+    import pytest
+
+    with pytest.raises(SystemExit) as exc:
+        main(["--help"])
+    assert exc.value.code == 0
+    ayuda = capsys.readouterr().out
+    for sub in (
+        "ingesta",
+        "items",
+        "similitud",
+        "acuerdo",
+        "dificultad",
+        "modelo",
+        "verificar",
+        "armar",
+    ):
+        assert sub in ayuda

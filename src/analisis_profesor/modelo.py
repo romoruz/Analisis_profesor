@@ -577,18 +577,27 @@ def _base_ejercicio_tarea(item_id: str) -> str:
 def _rango_semestre(semestre: str, fecha_objetivo: str = "") -> tuple[str, str] | None:
     """Devuelve `(fecha_inicio, fecha_fin)` en formato `AAAA-MM-DD` para el semestre dado."""
     texto = semestre.strip()
-    m_ciclo = re.fullmatch(
-        r"(\d{4})\s*[-/]\s*(II|I|2|1|primavera|otoño|otono|p|o|fall)",
-        texto,
-        re.IGNORECASE,
-    )
-    if m_ciclo:
-        anio, term = m_ciclo.group(1), m_ciclo.group(2).lower()
-        if term in ("i", "1", "primavera", "p"):
-            return (f"{anio}-01-01", f"{anio}-06-30")
-        return (f"{anio}-07-01", f"{anio}-12-31")
-    if re.fullmatch(r"\d{4}", texto):
-        return (f"{texto}-01-01", f"{texto}-12-31")
+    if texto:
+        tokens_term = r"(?:II|I|2|1|primavera|otoño|otono|fall|spring|p|o)"
+        m_anio_primero = re.fullmatch(
+            rf"(\d{{4}})\s*[-/\s]\s*({tokens_term})", texto, re.IGNORECASE
+        )
+        m_term_primero = re.fullmatch(
+            rf"({tokens_term})\s*[-/\s]\s*(\d{{4}})", texto, re.IGNORECASE
+        )
+        if m_anio_primero:
+            anio, term = m_anio_primero.group(1), m_anio_primero.group(2).lower()
+            if term in ("i", "1", "primavera", "spring", "p"):
+                return (f"{anio}-01-01", f"{anio}-06-30")
+            return (f"{anio}-07-01", f"{anio}-12-31")
+        if m_term_primero:
+            term, anio = m_term_primero.group(1).lower(), m_term_primero.group(2)
+            if term in ("i", "1", "primavera", "spring", "p"):
+                return (f"{anio}-01-01", f"{anio}-06-30")
+            return (f"{anio}-07-01", f"{anio}-12-31")
+        if re.fullmatch(r"\d{4}", texto):
+            return (f"{texto}-01-01", f"{texto}-12-31")
+        return None
     m_obj = re.fullmatch(r"(\d{4})-(\d{2})-(\d{2})", fecha_objetivo.strip())
     if m_obj:
         anio, mes = m_obj.group(1), int(m_obj.group(2))
@@ -721,6 +730,15 @@ def construir_cfg_desde_etiquetas(
     semestre_cfg = str(config.get("semestre", ""))
     inicio_sem_cfg = str(objetivo.get("inicio_semestre", ""))
     fecha_obj_cfg = str(objetivo.get("fecha", ""))
+    avisos_rotacion: list[str] = []
+    if (
+        semestre_cfg.strip()
+        and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", inicio_sem_cfg.strip())
+        and _rango_semestre(semestre_cfg) is None
+    ):
+        avisos_rotacion.append(
+            f"semestre no reconocido ({semestre_cfg!r}): no se derivó rotación automática por fecha"
+        )
     docs_rotados: set[str] = set()
     for et, doc_id, fecha, _parcial in preguntas_examen:
         if et.arquetipo not in k_set:
@@ -820,6 +838,7 @@ def construir_cfg_desde_etiquetas(
         "n_examenes_molde": len(molde_docs),
         "examenes_molde": sorted(molde_docs),
         "examenes_rotacion": sorted(docs_rotados),
+        "avisos_rotacion": avisos_rotacion,
         "n_examenes_vistos": len(orden_ex),
         "n_tareas_repetidas": len(repetidos_tarea),
         "material": cfg_salida["material"],

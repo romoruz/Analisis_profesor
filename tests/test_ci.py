@@ -11,6 +11,7 @@ ARCHIVOS_SOLO_STDLIB = frozenset(
     {
         "ap.py",
         "__init__.py",
+        "acuerdo.py",
         "banco.py",
         "cli.py",
         "config.py",
