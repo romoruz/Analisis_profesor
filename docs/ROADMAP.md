@@ -101,7 +101,7 @@ SD-II, reproduce los resultados de `legacy/`.
       escribir `SIMULACROS.md`, `SOLUCIONES.md` y `simulacros.tex` (más PDF si hay `pdflatex`).
       *Acepta:* mismos 5 simulacros que `legacy/.../salidas/simulacros.json` con la misma
       semilla.
-- [ ] 1.11 **E2E**: `scripts/e2e.sh <id>` corre todos los pasos [script] sobre `trabajo/<id>/`.
+- [x] 1.11 **E2E**: `scripts/e2e.sh <id>` corre todos los pasos [script] sobre `trabajo/<id>/`.
       *Acepta:* corre con `mini` en CI y con SD-II en local.
 
 ## Lotes y carriles (para ir más rápido sin perder rigor)
