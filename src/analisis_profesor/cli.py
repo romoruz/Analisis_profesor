@@ -234,10 +234,13 @@ def main(argv: list[str] | None = None) -> int:
         print(
             f"Modelo calculado en trabajo/{a.materia}/07_modelo.json "
             f"(R={res['n_simulaciones']}, molde={res['n_examenes_molde']}, "
-            f"p_dem={res['probabilidad_demostracion']:.3f}):"
+            f"p_dem={res['probabilidad_demostracion']:.3f}, "
+            f"tasa_acept={res['tasa_aceptacion']:.1%}):"
         )
         for aviso in res.get("parametros_derivados", {}).get("avisos_rotacion", []):
             print(f"  Aviso rotación: {aviso}")
+        for aviso in res.get("avisos_modelo", []):
+            print(f"  Aviso: {aviso}")
         for p_item in sorted(res["predicciones"], key=lambda d: -d["p_media"]):
             print(
                 f"  {p_item['arquetipo']}: base={p_item['p_media']:.3f} "

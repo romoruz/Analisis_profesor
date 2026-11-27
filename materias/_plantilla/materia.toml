@@ -14,7 +14,7 @@ ya_examinado_este_semestre = []  # arquetipos que ya salieron (se castigan con r
 
 [formato]                        # se deduce de los exámenes molde si se deja vacío
 preguntas = { "4" = 1.0 }        # número de preguntas: peso
-minutos = [75, 100]
+minutos = []                     # vacío = [0.8·mín, 1.15·máx] de los exámenes molde
 puntos_por_pregunta = []
 
 # Arquetipos: letra = ["descripción", minutos]

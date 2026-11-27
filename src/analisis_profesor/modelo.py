@@ -297,6 +297,52 @@ def _simular_bloques_theta(
     return frecuencias
 
 
+def _simula_interna(
+    cfg: Mapping,
+    R: int,
+    rng,
+    beta: float | None = None,
+    pi: float | None = None,
+    rho: float | None = None,
+    kappa: float | None = None,
+    guardar: bool = False,
+):
+    """Ejecuta `R` simulaciones aceptadas y devuelve `(probs, examenes, aceptados, intentos)`."""
+    usar_np = np is not None and not isinstance(rng, _RngPuro)
+    ctx = _preparar_contexto_simulacion(cfg, beta=beta, rho=rho, kappa=kappa, usar_np=usar_np)
+    k_lista = ctx["K"]
+    cuenta = np.zeros(len(k_lista)) if usar_np else [0.0] * len(k_lista)
+    ex: list[list[str]] = []
+    acc = 0
+    intentos = 0
+    max_intentos = max(R * 1000, 100_000)
+
+    while acc < R and intentos < max_intentos:
+        intentos += 1
+        th_m, th_n, p_mol = _sortear_theta(ctx, rng, pi=pi)
+        elig, _ = _intentar_examen_bajo_theta(ctx, rng, th_m, th_n, p_mol)
+        if elig is None:
+            continue
+        acc += 1
+        if usar_np:
+            cuenta[elig] += 1
+        else:
+            for j in elig:
+                cuenta[j] += 1.0
+        if guardar:
+            ex.append([k_lista[j] for j in elig])
+
+    if acc < R:
+        lo, hi = ctx["lo"], ctx["hi"]
+        raise ValueError(
+            f"Ventana de minutos [{lo}, {hi}] demasiado estrecha: solo {acc}/{R} exámenes "
+            f"aceptados tras {intentos} intentos."
+        )
+
+    probs = cuenta / R if usar_np else [c / R for c in cuenta]
+    return probs, ex, acc, intentos
+
+
 def simula(
     cfg: Mapping,
     R: int,
@@ -314,28 +360,9 @@ def simula(
     Berger, Bernardo y Sun `arXiv:1504.02689` en `docs/INVESTIGACION.md`).
     Preserva exactamente la secuencia de llamadas a `rng` respecto a `legacy/`.
     """
-    usar_np = np is not None and not isinstance(rng, _RngPuro)
-    ctx = _preparar_contexto_simulacion(cfg, beta=beta, rho=rho, kappa=kappa, usar_np=usar_np)
-    k_lista = ctx["K"]
-    cuenta = np.zeros(len(k_lista)) if usar_np else [0.0] * len(k_lista)
-    ex: list[list[str]] = []
-    acc = 0
-
-    while acc < R:
-        th_m, th_n, p_mol = _sortear_theta(ctx, rng, pi=pi)
-        elig, _ = _intentar_examen_bajo_theta(ctx, rng, th_m, th_n, p_mol)
-        if elig is None:
-            continue
-        acc += 1
-        if usar_np:
-            cuenta[elig] += 1
-        else:
-            for j in elig:
-                cuenta[j] += 1.0
-        if guardar:
-            ex.append([k_lista[j] for j in elig])
-
-    probs = cuenta / R if usar_np else [c / R for c in cuenta]
+    probs, ex, _acc, _intentos = _simula_interna(
+        cfg, R, rng, beta=beta, pi=pi, rho=rho, kappa=kappa, guardar=guardar
+    )
     return probs, ex
 
 
@@ -381,11 +408,25 @@ def corre(
     usar_np = usar_numpy is not False and np is not None
     rng = _crear_rng(semilla, usar_numpy=usar_np)
     k_lista = list(cfg["arquetipos"])
-    base, ex = simula(cfg, R, rng, guardar=True)
+    base, ex, n_acc, n_intentos = _simula_interna(cfg, R, rng, guardar=True)
+    tasa_acept = n_acc / n_intentos if n_intentos > 0 else 0.0
+    lo_min, hi_min = float(cfg["ventana"][0]), float(cfg["ventana"][1])
+    avisos_modelo: list[str] = []
+    if tasa_acept < 0.05:
+        avisos_modelo.append(
+            f"Tasa de aceptación baja ({tasa_acept:.1%}, {n_acc}/{n_intentos} intentos) "
+            f"para la ventana [{lo_min:g}, {hi_min:g}] min (< 5 %); "
+            "considera ampliar la ventana de minutos."
+        )
     out: dict = {
         "K": k_lista,
         "nombres": {k: cfg["arquetipos"][k][0] for k in k_lista},
         "minutos": {k: cfg["arquetipos"][k][1] for k in k_lista},
+        "ventana_minutos": [lo_min, hi_min],
+        "tasa_aceptacion": round(tasa_acept, 4),
+        "n_aceptados_simulacion": n_acc,
+        "n_intentos_simulacion": n_intentos,
+        "avisos_modelo": avisos_modelo,
         "p_base": {k: round(float(v), 3) for k, v in zip(k_lista, base, strict=True)},
     }
     if malla:
@@ -817,8 +858,33 @@ def construir_cfg_desde_etiquetas(
     formato = config.get("formato", {})
     preg_cfg = formato.get("preguntas") or {"4": 1.0}
     n_dist = {int(k): float(v) for k, v in preg_cfg.items()}
-    mins = formato.get("minutos") or [75.0, 100.0]
-    ventana = (float(mins[0]), float(mins[-1]))
+
+    minutos_por_doc: dict[str, float] = {}
+    for et, doc_id, _fecha, _parcial in preguntas_examen:
+        if doc_id not in molde_docs:
+            continue
+        if et.minutos is not None and et.minutos > 0:
+            min_q = float(et.minutos)
+        elif et.arquetipo in arquetipos_cfg:
+            min_q = float(arquetipos_cfg[et.arquetipo][1])
+        else:
+            min_q = 0.0
+        minutos_por_doc[doc_id] = minutos_por_doc.get(doc_id, 0.0) + min_q
+    minutos_molde = {
+        d: round(minutos_por_doc[d], 2) for d in sorted(minutos_por_doc) if minutos_por_doc[d] > 0
+    }
+
+    mins = formato.get("minutos") or []
+    if mins:
+        ventana = (float(mins[0]), float(mins[-1]))
+        ventana_origen = "explicita"
+    elif minutos_molde:
+        vals_m = list(minutos_molde.values())
+        ventana = (round(0.8 * min(vals_m), 2), round(1.15 * max(vals_m), 2))
+        ventana_origen = "molde"
+    else:
+        ventana = (75.0, 100.0)
+        ventana_origen = "defecto"
     modelo_cfg = config.get("modelo", {})
 
     cfg_salida = {
@@ -837,6 +903,9 @@ def construir_cfg_desde_etiquetas(
     resumen_derivacion = {
         "n_examenes_molde": len(molde_docs),
         "examenes_molde": sorted(molde_docs),
+        "minutos_molde": minutos_molde,
+        "ventana": [ventana[0], ventana[1]],
+        "ventana_origen": ventana_origen,
         "examenes_rotacion": sorted(docs_rotados),
         "avisos_rotacion": avisos_rotacion,
         "n_examenes_vistos": len(orden_ex),
@@ -896,7 +965,9 @@ def calcular_modelo(
 
     niveles_prob = derivacion["niveles"]
     niv_keys = list(niveles_prob)
-    niv_vals = list(niveles_prob.values())
+    niv_raw = list(niveles_prob.values())
+    s_niv = sum(niv_raw)
+    niv_vals = [v / s_niv for v in niv_raw] if s_niv > 0 else niv_raw
 
     def _decorar(_k: str, rng) -> dict:
         return {"nivel": str(rng.choice(niv_keys, p=niv_vals))}

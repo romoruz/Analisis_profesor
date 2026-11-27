@@ -405,3 +405,206 @@ def test_rotacion_solo_semestre_en_curso_ignora_examen_viejo_otro_parcial():
     assert deriv_raro["examenes_rotacion"] == []
     assert cfg_out_raro["rotacion"] == []
     assert deriv["avisos_rotacion"] == []
+
+
+def test_ventana_deducida_moldes_90_y_90_con_holgura(mini_dir: Path, tmp_path: Path):
+    from analisis_profesor.config import leer_config_materia
+    from analisis_profesor.etiquetas import leer_etiquetas
+    from analisis_profesor.modelo import calcular_modelo, construir_cfg_desde_etiquetas
+
+    for etiqueta_caso in ("lista_vacia", "sin_clave"):
+        raiz_trabajo = tmp_path / f"trab_{etiqueta_caso}"
+        carpeta = raiz_trabajo / "mini"
+        shutil.copytree(mini_dir, carpeta)
+        ruta_toml = carpeta / "materia.toml"
+        txt = ruta_toml.read_text(encoding="utf-8")
+        if etiqueta_caso == "lista_vacia":
+            txt = txt.replace("minutos = [75, 95]", "minutos = []")
+        else:
+            txt = txt.replace("minutos = [75, 95]\n", "")
+        ruta_toml.write_text(txt, encoding="utf-8")
+
+        cfg_mat = leer_config_materia(carpeta)
+        assert cfg_mat["formato"]["minutos"] == []
+        etiquetas = leer_etiquetas(carpeta / "05_etiquetas.csv", rasgos=cfg_mat["rasgos"])
+        cfg_calc, deriv = construir_cfg_desde_etiquetas(cfg_mat, etiquetas)
+
+        assert cfg_calc["ventana"] == (72.0, 103.5)
+        assert deriv["ventana"] == [72.0, 103.5]
+        assert deriv["ventana_origen"] == "molde"
+        assert deriv["minutos_molde"] == {"P1_2025-04-10": 90.0, "P1_2026-04-15": 90.0}
+
+        for usar_np in (True, False):
+            res = calcular_modelo(
+                "mini",
+                raiz_trabajo=raiz_trabajo,
+                semilla=2026,
+                n_simulaciones=400,
+                n_rejilla=50,
+                n_sorteos=3,
+                usar_numpy=usar_np,
+            )
+            assert res["ventana_minutos"] == [72.0, 103.5]
+            assert res["n_aceptados_simulacion"] == 400
+            assert res["n_intentos_simulacion"] >= 400
+            assert res["tasa_aceptacion"] > 0.20
+            assert res["avisos_modelo"] == []
+
+    # Caso sintético: 4 arquetipos (15, 20, 25, 30 min) y 2 moldes de 90 y 90 min sin clave minutos
+    from analisis_profesor.config import RASGOS_POR_DEFECTO
+    from analisis_profesor.etiquetas import escribir_etiquetas
+
+    raiz_sin = tmp_path / "trab_sint"
+    carpeta_sin = raiz_sin / "sint"
+    carpeta_sin.mkdir(parents=True)
+    (carpeta_sin / "materia.toml").write_text(
+        "\n".join(
+            [
+                'id = "sint"',
+                'nombre = "Sintético 90-90"',
+                'profesor = "Test"',
+                'semestre = "2026-II"',
+                "",
+                "[objetivo]",
+                'parcial = "P1"',
+                'molde = ["P1_2025-04-01", "P1_2026-04-01"]',
+                "",
+                "[formato]",
+                'preguntas = { "4" = 1.0 }',
+                "",
+                "[arquetipos]",
+                'A = ["Tema A", 15]',
+                'B = ["Tema B", 20]',
+                'C = ["Tema C", 25]',
+                'D = ["Tema D", 30]',
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    et_sint = [
+        Etiqueta(item_id="T1:1", arquetipo="A"),
+        Etiqueta(item_id="T1:2", arquetipo="B"),
+        Etiqueta(item_id="T1:3", arquetipo="C"),
+        Etiqueta(item_id="T1:4", arquetipo="D"),
+        Etiqueta(item_id="P1_2025-04-01:Q1", arquetipo="A", fuente="T1:1", nivel="casi copia"),
+        Etiqueta(item_id="P1_2025-04-01:Q2", arquetipo="B", fuente="T1:2", nivel="casi copia"),
+        Etiqueta(item_id="P1_2025-04-01:Q3", arquetipo="C", fuente="T1:3", nivel="adaptación"),
+        Etiqueta(item_id="P1_2025-04-01:Q4", arquetipo="D", fuente="T1:4", nivel="nueva"),
+        Etiqueta(item_id="P1_2026-04-01:Q1", arquetipo="A", fuente="T1:1", nivel="casi copia"),
+        Etiqueta(item_id="P1_2026-04-01:Q2", arquetipo="B", fuente="T1:2", nivel="adaptación"),
+        Etiqueta(item_id="P1_2026-04-01:Q3", arquetipo="C", fuente="T1:3", nivel="nueva"),
+        Etiqueta(item_id="P1_2026-04-01:Q4", arquetipo="D", fuente="T1:4", nivel="casi copia"),
+    ]
+    escribir_etiquetas(carpeta_sin / "05_etiquetas.csv", et_sint, RASGOS_POR_DEFECTO)
+    res_sint = calcular_modelo(
+        "sint",
+        raiz_trabajo=raiz_sin,
+        semilla=2026,
+        n_simulaciones=400,
+        n_rejilla=50,
+        n_sorteos=1,
+    )
+    assert res_sint["ventana_minutos"] == [72.0, 103.5]
+    assert res_sint["parametros_derivados"]["minutos_molde"] == {
+        "P1_2025-04-01": 90.0,
+        "P1_2026-04-01": 90.0,
+    }
+    assert res_sint["tasa_aceptacion"] > 0.20
+
+
+def test_aviso_tasa_aceptacion_menor_5_por_ciento(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+):
+    from analisis_profesor.cli import main
+    from analisis_profesor.config import RASGOS_POR_DEFECTO
+    from analisis_profesor.etiquetas import escribir_etiquetas
+    from analisis_profesor.modelo import corre
+
+    raiz = tmp_path / "trabajo"
+    carpeta = raiz / "estrecho"
+    carpeta.mkdir(parents=True)
+    (carpeta / "materia.toml").write_text(
+        "\n".join(
+            [
+                'id = "estrecho"',
+                'nombre = "Prueba Ventana Estrecha"',
+                'profesor = "Test"',
+                'semestre = "2026-II"',
+                "",
+                "[objetivo]",
+                'parcial = "P1"',
+                'molde = ["P1_2026-04-01"]',
+                "",
+                "[formato]",
+                'preguntas = { "4" = 1.0 }',
+                "minutos = [100, 100]",
+                "",
+                "[arquetipos]",
+                'A = ["Tema A", 20]',
+                'B = ["Tema B", 20]',
+                'C = ["Tema C", 20]',
+                'D = ["Tema D", 20]',
+                'E = ["Tema E", 25]',
+                'F = ["Tema F", 35]',
+                "",
+                "[modelo]",
+                "semilla = 2026",
+                "beta = 6",
+                "suavizado = 0.2",
+                "rho = 0.6",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    etiquetas = [
+        *[Etiqueta(item_id=f"T1:{i}", arquetipo="A") for i in range(1, 5)],
+        *[Etiqueta(item_id=f"T2:{i}", arquetipo="B") for i in range(1, 5)],
+        *[Etiqueta(item_id=f"T3:{i}", arquetipo="C") for i in range(1, 5)],
+        *[Etiqueta(item_id=f"T4:{i}", arquetipo="D") for i in range(1, 5)],
+        Etiqueta(item_id="T5:1", arquetipo="E", examinable=False),
+        Etiqueta(item_id="T6:1", arquetipo="F", examinable=False),
+        Etiqueta(item_id="P1_2026-04-01:Q1", arquetipo="A", fuente="T1:1", nivel="casi copia"),
+        Etiqueta(item_id="P1_2026-04-01:Q2", arquetipo="B", fuente="T2:1", nivel="casi copia"),
+        Etiqueta(item_id="P1_2026-04-01:Q3", arquetipo="C", fuente="T3:1", nivel="casi copia"),
+        Etiqueta(item_id="P1_2026-04-01:Q4", arquetipo="D", fuente="T4:1", nivel="casi copia"),
+    ]
+    escribir_etiquetas(carpeta / "05_etiquetas.csv", etiquetas, RASGOS_POR_DEFECTO)
+
+    # Caso rápido con corre para verificar umbral < 5 % en blanco y negro
+    cfg_lenta = {
+        "arquetipos": {
+            "A": ("A", 20),
+            "B": ("B", 20),
+            "C": ("C", 20),
+            "D": ("D", 20),
+            "E": ("E", 25),
+            "F": ("F", 35),
+        },
+        "material": {"A": 8.0, "B": 8.0, "C": 8.0, "D": 8.0, "E": 0.5, "F": 0.5},
+        "molde": {"A": 1, "B": 1, "C": 1, "D": 1},
+        "pi_molde": (1.0, 1.0),
+        "N": {4: 1.0},
+        "ventana": (100.0, 100.0),
+        "beta": 6.0,
+        "suavizado": 0.2,
+    }
+    res_rapido = corre(cfg_lenta, R=300, R_rejilla=0, semilla=2026, malla=None)
+    assert 0.0 < res_rapido["tasa_aceptacion"] < 0.05
+    assert res_rapido["avisos_modelo"]
+    assert "5 %" in res_rapido["avisos_modelo"][0]
+
+    monkeypatch.chdir(tmp_path)
+    rc = main(
+        ["modelo", "estrecho", "--simulaciones", "300", "--rejilla", "20", "--sorteos", "2"]
+    )
+    assert rc == 0
+    salida = capsys.readouterr().out
+    assert "tasa_acept=" in salida
+    assert "Aviso" in salida
+
+    modelo_json = json.loads((carpeta / "07_modelo.json").read_text(encoding="utf-8"))
+    assert 0.0 < modelo_json["tasa_aceptacion"] < 0.05
+    assert modelo_json["avisos_modelo"]
