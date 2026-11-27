@@ -10,6 +10,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from analisis_profesor.esquemas import Item, leer_jsonl
+from analisis_profesor.procedencia import construir_procedencia
 
 
 def norm(texto: str) -> str:
@@ -227,6 +228,7 @@ def calcular_similitud(
         "linea_base": linea_base,
         "preguntas_examen": preguntas_examen,
         "tareas_entre_si": tareas_entre_si,
+        "procedencia": construir_procedencia(base_dir, ("03_items.jsonl",)),
     }
     (base_dir / "04_similitud.json").write_text(
         json.dumps(resultado, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"

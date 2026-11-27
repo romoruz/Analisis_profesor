@@ -22,6 +22,7 @@ from analisis_profesor.banco import (
 from analisis_profesor.config import leer_config_materia
 from analisis_profesor.dificultad import score_item
 from analisis_profesor.modelo import calcular_modelo
+from analisis_profesor.procedencia import construir_procedencia
 from analisis_profesor.salida import escribir_entregables
 
 try:
@@ -267,6 +268,17 @@ def armar_simulacros(
         "relajaciones_por_tipo": relajaciones_tipo,
         "avisos_relajacion": avisos,
         "examenes": examenes,
+        "procedencia": construir_procedencia(
+            base,
+            (
+                "materia.toml",
+                "materia.json",
+                "06_dificultad.json",
+                "07_modelo.json",
+                "08_banco.md",
+                "08_verificacion.json",
+            ),
+        ),
     }
     (base / "simulacros.json").write_text(
         json.dumps(salida, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
