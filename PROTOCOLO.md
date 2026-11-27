@@ -5,7 +5,7 @@
 > transcribir, etiquetar y redactar. Los scripts de `ap.py` hacen las cuentas (similitud,
 > estadística, sorteo) para que sean reproducibles y no inventadas.
 
-Versión del protocolo: 7
+Versión del protocolo: 8
 
 ---
 
@@ -131,11 +131,13 @@ de dónde sale. Anótalo en `fuente` y `nivel` del paso 5. Busca sobre todo:
 
 ### 5.1 Arquetipos
 
-Define de 6 a 12 **tipos de pregunta** para el parcial objetivo, con una letra cada uno, a
-partir del temario y de los ejercicios. Un arquetipo es "lo que se practica" (p. ej. "Método del
-potencial: U, equilibrios, estabilidad, retrato fase"), no un tema amplio. Escríbelos en
-`trabajo/<id>/materia.toml` (plantilla en `materias/_plantilla/materia.toml`) con sus minutos
-estimados.
+Si el kit trae `materias/<id>/materia.toml` para esta materia, úsalo tal cual y no inventes arquetipos.
+Cópialo a `trabajo/<id>/materia.toml` y llena solo el semestre y `[objetivo]` sin alterar
+`[arquetipos]`. Si no existe, define de 6 a 12 **tipos de pregunta** para el parcial objetivo, con
+una letra cada uno, a partir del temario y de los ejercicios. Un arquetipo es "lo que se practica"
+(p. ej. "Método del potencial: U, equilibrios, estabilidad, retrato fase"), no un tema amplio.
+Escríbelos en `trabajo/<id>/materia.toml` (plantilla en `materias/_plantilla/materia.toml`) con sus
+minutos estimados.
 
 ### 5.2 Etiquetas
 
@@ -261,6 +263,12 @@ cambies el nivel de confianza. Secciones:
    simulacros con cronómetro.
 6. **Limitaciones:** n de exámenes, supuestos, que las etiquetas las puso una IA y que el modelo
    predice tipos, no preguntas exactas.
+
+Antes de entregar, valida citas, cifras de la tabla y vigencia de las salidas con:
+
+```
+python ap.py validar-guia <id>
+```
 
 ## 10. Entrega
 

@@ -8,7 +8,7 @@ SALIDA="dist/kit_analisis_profesor.zip"
 mkdir -p dist
 rm -f "$SALIDA"
 git archive --format=zip --prefix=kit_analisis_profesor/ -o "$SALIDA" HEAD \
-  PROTOCOLO.md README.md ap.py pyproject.toml src plantillas materias/_plantilla
+  PROTOCOLO.md README.md ap.py pyproject.toml src plantillas materias
 python3 - "$SALIDA" <<'PY'
 import sys, zipfile
 z = zipfile.ZipFile(sys.argv[1])
