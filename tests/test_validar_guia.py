@@ -197,3 +197,107 @@ def test_validar_guia_detecta_errores_y_cli_devuelve_1(
     monkeypatch.chdir(tmp_path)
     assert main(["validar-guia", "mini", "--guia", str(guia_cifras)]) == 1
     assert main(["validar-guia", "mini", "--guia", str(tmp_path / "no_existe.md")]) == 1
+
+
+def test_procedencia_y_desfase_detectado_por_validar_guia(
+    mini_dir: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+):
+    from analisis_profesor.armado import armar_simulacros
+    from analisis_profesor.banco import verificar_banco
+    from analisis_profesor.dificultad import calcular_dificultad
+    from analisis_profesor.similitud import calcular_similitud
+    from analisis_profesor.validacion_guia import validar_guia
+
+    raiz_trabajo, carpeta, items, modelo = _preparar_mini_con_modelo(mini_dir, tmp_path)
+    calcular_similitud("mini", raiz_trabajo=raiz_trabajo)
+    calcular_dificultad("mini", raiz_trabajo=raiz_trabajo, semilla=2026)
+    modelo = calcular_modelo(
+        "mini",
+        raiz_trabajo=raiz_trabajo,
+        semilla=2026,
+        n_simulaciones=500,
+        n_rejilla=100,
+        n_sorteos=5,
+    )
+    verificar_banco("mini", raiz_trabajo=raiz_trabajo, timeout_s=10.0)
+    armar_simulacros(
+        "mini", raiz_trabajo=raiz_trabajo, semilla=2026, n_simulacros=5, compilar_pdf=False
+    )
+
+    evidencias = [it.id for it in items if not it.padre_id]
+    entregables = carpeta / "entregables"
+    entregables.mkdir(parents=True, exist_ok=True)
+    ruta_guia = entregables / "GUIA_PARCIAL.md"
+    ruta_guia.write_text(_formatear_guia(modelo, evidencias), encoding="utf-8")
+
+    esperadas = {
+        "04_similitud.json": {"03_items.jsonl"},
+        "06_dificultad.json": {"materia.toml", "03_items.jsonl", "05_etiquetas.csv"},
+        "07_modelo.json": {
+            "materia.toml",
+            "03_items.jsonl",
+            "04_similitud.json",
+            "05_etiquetas.csv",
+        },
+        "simulacros.json": {
+            "materia.toml",
+            "06_dificultad.json",
+            "07_modelo.json",
+            "08_banco.md",
+            "08_verificacion.json",
+        },
+    }
+    for nombre_json, reqs in esperadas.items():
+        data = json.loads((carpeta / nombre_json).read_text(encoding="utf-8"))
+        proc = data.get("procedencia", {})
+        hashes = proc.get("entradas_sha256", {})
+        assert reqs.issubset(set(hashes))
+        assert all(isinstance(h, str) and len(h) == 64 for h in hashes.values())
+
+    res_ok = validar_guia("mini", raiz_trabajo=raiz_trabajo)
+    assert res_ok["valida"] is True
+    assert res_ok["salidas_desfasadas"] == []
+
+    # Criterio Acepta: editar 05_etiquetas.csv después de dificultad y re-correr modelo + armado
+    ruta_et = carpeta / "05_etiquetas.csv"
+    txt_et = ruta_et.read_text(encoding="utf-8")
+    assert "T1:1,A,,,2,0,1" in txt_et
+    ruta_et.write_text(txt_et.replace("T1:1,A,,,2,0,1", "T1:1,A,,,3,0,1", 1), encoding="utf-8")
+
+    modelo2 = calcular_modelo(
+        "mini",
+        raiz_trabajo=raiz_trabajo,
+        semilla=2026,
+        n_simulaciones=500,
+        n_rejilla=100,
+        n_sorteos=5,
+    )
+    armar_simulacros(
+        "mini", raiz_trabajo=raiz_trabajo, semilla=2026, n_simulacros=5, compilar_pdf=False
+    )
+    ruta_guia.write_text(_formatear_guia(modelo2, evidencias), encoding="utf-8")
+
+    res_desf = validar_guia("mini", raiz_trabajo=raiz_trabajo)
+    assert res_desf["valida"] is False
+    pares_desf = {(d["salida"], d["entrada"], d["motivo"]) for d in res_desf["salidas_desfasadas"]}
+    assert pares_desf == {("06_dificultad.json", "05_etiquetas.csv", "modificada")}
+    assert any(
+        "06_dificultad.json" in err and "05_etiquetas.csv" in err for err in res_desf["errores"]
+    )
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["validar-guia", "mini"]) == 1
+    salida = capsys.readouterr().out
+    assert "desfasadas: 1" in salida
+
+    # Modificar 03_items.jsonl tras similitud y 08_banco.md tras armado
+    ruta_items = carpeta / "03_items.jsonl"
+    ruta_items.write_text(ruta_items.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+    ruta_banco = carpeta / "08_banco.md"
+    ruta_banco.write_text(ruta_banco.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+
+    res_multi = validar_guia("mini", raiz_trabajo=raiz_trabajo)
+    assert res_multi["valida"] is False
+    salidas_vistas = {(d["salida"], d["entrada"]) for d in res_multi["salidas_desfasadas"]}
+    assert ("04_similitud.json", "03_items.jsonl") in salidas_vistas
+    assert ("simulacros.json", "08_banco.md") in salidas_vistas

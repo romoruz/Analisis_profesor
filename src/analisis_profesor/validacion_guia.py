@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from analisis_profesor.esquemas import Item, leer_jsonl
+from analisis_profesor.procedencia import verificar_procedencia_trabajo
 
 _PATRON_URL = re.compile(r"https?://[^\s)\]>]+")
 _PATRON_ID = re.compile(
@@ -321,9 +322,12 @@ def validar_guia(
     )
     errores.extend(err_tabla)
 
+    salidas_desfasadas, avisos_proc, errores_proc = verificar_procedencia_trabajo(trabajo_dir)
+    errores.extend(errores_proc)
+
     temas_malos = {d["arquetipo"] for d in discrepancias} | set(sin_evidencia)
     temas_validados = sum(1 for k in en_tabla if k not in temas_malos)
-    avisos: list[str] = []
+    avisos: list[str] = list(avisos_proc)
     if not ids_citados:
         avisos.append("La guía no cita ningún ID de ítem.")
 
@@ -341,6 +345,7 @@ def validar_guia(
         "arquetipos_faltantes": faltantes,
         "discrepancias_modelo": discrepancias,
         "filas_sin_evidencia": sin_evidencia,
+        "salidas_desfasadas": salidas_desfasadas,
         "avisos": avisos,
         "errores": errores,
     }

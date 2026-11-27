@@ -15,6 +15,7 @@ from analisis_profesor.config import leer_config_materia
 from analisis_profesor.esquemas import Etiqueta, Item, Prediccion, leer_jsonl
 from analisis_profesor.estadistica import intervalo_jeffreys
 from analisis_profesor.etiquetas import leer_etiquetas
+from analisis_profesor.procedencia import construir_procedencia
 
 try:
     import numpy as np
@@ -945,6 +946,16 @@ def calcular_modelo(
         "parametros_derivados": derivacion,
         "sorteos_independientes": sorteos_indep,
         "sorteos": sorteos_bal,
+        "procedencia": construir_procedencia(
+            base,
+            (
+                "materia.toml",
+                "materia.json",
+                "03_items.jsonl",
+                "04_similitud.json",
+                "05_etiquetas.csv",
+            ),
+        ),
     }
     (base / "07_modelo.json").write_text(
         json.dumps(salida, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"

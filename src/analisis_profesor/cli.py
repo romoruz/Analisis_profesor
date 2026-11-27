@@ -322,11 +322,13 @@ def main(argv: list[str] | None = None) -> int:
         res = validar_guia(a.materia, ruta_guia=guia_path, tolerancia=a.tolerancia)
         estado = "VÁLIDA" if res["valida"] else "INVÁLIDA"
         n_k = len(res["arquetipos_en_tabla"]) + len(res["arquetipos_faltantes"])
+        desf = res.get("salidas_desfasadas", [])
+        desf_txt = f"; salidas desfasadas: {len(desf)}" if desf else ""
         print(f"Validación de guía ({a.materia}): {estado} -> {base / '09_validacion_guia.json'}")
         print(
             f"  IDs citados: {res['n_ids_citados']} "
             f"(inexistentes: {len(res['ids_inexistentes'])}); "
-            f"temas validados: {res['temas_validados']}/{n_k}"
+            f"temas validados: {res['temas_validados']}/{n_k}{desf_txt}"
         )
         for aviso in res["avisos"]:
             print(f"  Aviso: {aviso}")

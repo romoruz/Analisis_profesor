@@ -20,6 +20,7 @@ from analisis_profesor.estadistica import (
     wilcoxon_pareado,
 )
 from analisis_profesor.etiquetas import leer_etiquetas
+from analisis_profesor.procedencia import construir_procedencia
 
 try:
     import numpy as np
@@ -609,6 +610,9 @@ def calcular_dificultad(
         "dificultad_total_examen": dificultad_total_examen,
         "examenes_detalle": examenes_detalle,
         "contra_calificaciones": emp,
+        "procedencia": construir_procedencia(
+            base, ("materia.toml", "materia.json", "03_items.jsonl", "05_etiquetas.csv")
+        ),
     }
     (base / "06_dificultad.json").write_text(
         json.dumps(resultado, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"

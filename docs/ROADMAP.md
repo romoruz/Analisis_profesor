@@ -180,7 +180,7 @@ Ver `docs/pruebas_chat/ronda2_2026-11-27.md`. Las cifras de los dos chats se rep
       probabilidades son comparables entre corridas y chats. Agregar `materias/sd2/materia.toml`
       con los 10 arquetipos de legacy.
       *Acepta:* dos corridas con el mismo `materia.toml` dan las mismas claves K.
-- [ ] 2.10 **Procedencia de las salidas.** Cada JSON (`04`, `06`, `07`, `simulacros`) guarda el
+- [x] 2.10 **Procedencia de las salidas.** Cada JSON (`04`, `06`, `07`, `simulacros`) guarda el
       sha256 de sus entradas; `validar-guia` marca como desfasada cualquier salida cuyas entradas
       cambiaron después.
       *Acepta:* editar `05_etiquetas.csv` después de `dificultad` hace fallar `validar-guia`.
