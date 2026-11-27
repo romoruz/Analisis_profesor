@@ -7,6 +7,7 @@ import subprocess
 from pathlib import Path
 
 import pytest
+from conftest import pdflatex_funcional
 
 from analisis_profesor.config import RASGOS_LEGACY_SD2
 
@@ -109,7 +110,7 @@ def test_e2e_mini_pipeline_completo(mini_dir: Path, tmp_path: Path):
     assert (ent / "SIMULACROS.md").is_file()
     assert (ent / "SOLUCIONES.md").is_file()
     assert (ent / "simulacros.tex").is_file()
-    if shutil.which("pdflatex"):
+    if pdflatex_funcional():
         assert (ent / "simulacros.pdf").is_file()
 
     # Comprueba también la rama --zip ejecutando ingesta dentro del flujo e2e sobre copia limpia
@@ -228,5 +229,5 @@ def test_e2e_sd2_real(sd2_dir: Path, tmp_path: Path):
 
     sim = json.loads((carpeta / "simulacros.json").read_text(encoding="utf-8"))
     assert len(sim["examenes"]) == 5
-    if shutil.which("pdflatex"):
+    if pdflatex_funcional():
         assert (carpeta / "entregables" / "simulacros.pdf").is_file()

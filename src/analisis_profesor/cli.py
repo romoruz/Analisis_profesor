@@ -252,6 +252,9 @@ def main(argv: list[str] | None = None) -> int:
             f"Entregables: SIMULACROS.md, SOLUCIONES.md, simulacros.tex"
             f"{', simulacros.pdf' if ent.get('pdf_generado') else ''}"
         )
+        motivo = str(ent.get("motivo", ""))
+        if not a.sin_pdf and not ent.get("pdf_generado") and motivo:
+            print(f"Aviso: no se generó el PDF ({motivo}). Usa SIMULACROS.md o el .tex.")
         return 0
     fase, _ = PENDIENTES[a.cmd]
     print(f"PENDIENTE: `{a.cmd}` se implementa en la {fase} (docs/ROADMAP.md). "

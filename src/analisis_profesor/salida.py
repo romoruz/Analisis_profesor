@@ -168,27 +168,39 @@ def generar_tex_simulacros(
     return _CABECERA_TEX + "\n\\newpage\n".join(bloques) + "\n\\end{document}\n"
 
 
+def _limpiar_auxiliares(ruta_tex: Path) -> None:
+    for ext in (".aux", ".log"):
+        aux = ruta_tex.with_suffix(ext)
+        if aux.exists():
+            aux.unlink()
+
+
 def compilar_tex_a_pdf(ruta_tex: Path, *, timeout_s: float = 60.0) -> dict:
     """Compila un `.tex` a `.pdf` con `pdflatex` si está instalado."""
     if shutil.which("pdflatex") is None:
         return {"pdf_generado": False, "ruta_pdf": None, "motivo": "pdflatex no disponible"}
 
+    # El PDF es opcional: si pdflatex falla (p. ej. falta un paquete como lmodern en un sandbox
+    # o en una instalación mínima de TeX), se conservan .tex y .md y se informa el motivo.
     for _ in range(2):
-        proc = subprocess.run(
-            ["pdflatex", "-interaction=nonstopmode", "-halt-on-error", ruta_tex.name],
-            cwd=ruta_tex.parent,
-            capture_output=True,
-            text=True,
-            timeout=timeout_s,
-        )
+        try:
+            proc = subprocess.run(
+                ["pdflatex", "-interaction=nonstopmode", "-halt-on-error", ruta_tex.name],
+                cwd=ruta_tex.parent,
+                capture_output=True,
+                text=True,
+                timeout=timeout_s,
+            )
+        except (OSError, subprocess.TimeoutExpired) as err:
+            return {"pdf_generado": False, "ruta_pdf": None, "motivo": f"pdflatex falló: {err}"}
         if proc.returncode != 0:
-            detalle = (proc.stdout or proc.stderr)[-2000:]
-            raise RuntimeError(f"pdflatex falló en {ruta_tex}:\n{detalle}")
+            salida = proc.stdout or proc.stderr or ""
+            errores = [ln for ln in salida.splitlines() if ln.startswith("!")]
+            resumen = errores[0] if errores else salida.strip()[-300:]
+            _limpiar_auxiliares(ruta_tex)
+            return {"pdf_generado": False, "ruta_pdf": None, "motivo": f"pdflatex falló: {resumen}"}
 
-    for ext in (".aux", ".log"):
-        aux = ruta_tex.with_suffix(ext)
-        if aux.exists():
-            aux.unlink()
+    _limpiar_auxiliares(ruta_tex)
     ruta_pdf = ruta_tex.with_suffix(".pdf")
     return {"pdf_generado": ruta_pdf.is_file(), "ruta_pdf": str(ruta_pdf), "motivo": "ok"}
 
