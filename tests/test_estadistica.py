@@ -218,3 +218,63 @@ def test_intervalo_jeffreys_contra_scipy_y_cobertura():
     cubre = sum(1 for k in exitos_sim if cache[int(k)][0] <= p_verdadera <= cache[int(k)][1])
     cobertura = cubre / len(exitos_sim)
     assert 0.85 <= cobertura <= 0.95
+
+
+def test_alfa_krippendorff_canonico_y_respaldo():
+    from analisis_profesor.estadistica import alfa_krippendorff
+
+    # Ejemplo canónico de Krippendorff (2011, Sección C: 12 unidades x 4 codificadores)
+    obs = [
+        [1, 2, 3, 3, 2, 1, 4, 1, 2, None, None, None],
+        [1, 2, 3, 3, 2, 2, 4, 1, 2, 5, None, 3],
+        [None, 3, 3, 3, 2, 3, 4, 2, 2, 5, 1, None],
+        [1, 2, 3, 3, 2, 4, 4, 1, 2, 5, 1, None],
+    ]
+    unidades = [[o[u] for o in obs if o[u] is not None] for u in range(12)]
+
+    nom_np = alfa_krippendorff(
+        unidades, metrica="nominal", n_remuestras=1000, semilla=2026, usar_numpy=True
+    )
+    nom_py = alfa_krippendorff(
+        unidades, metrica="nominal", n_remuestras=1000, semilla=2026, usar_numpy=False
+    )
+    assert nom_np["n_unidades"] == 11  # unidad 12 solo tiene 1 valor (3), no es emparejable
+    assert abs(nom_np["alfa"] - 113 / 152) < 1e-9
+    assert abs(nom_py["alfa"] - 113 / 152) < 1e-9
+    assert nom_np["clasificacion"] == "tentativo"
+    assert nom_np["exploratorio"] is False
+
+    ord_np = alfa_krippendorff(
+        unidades,
+        metrica="ordinal",
+        orden_categorias=[1, 2, 3, 4, 5],
+        n_remuestras=1000,
+        semilla=2026,
+        usar_numpy=True,
+    )
+    ord_py = alfa_krippendorff(
+        unidades,
+        metrica="ordinal",
+        orden_categorias=[1, 2, 3, 4, 5],
+        n_remuestras=1000,
+        semilla=2026,
+        usar_numpy=False,
+    )
+    assert abs(ord_np["alfa"] - 108577 / 133160) < 1e-9
+    assert abs(ord_py["alfa"] - 108577 / 133160) < 1e-9
+    assert ord_np["clasificacion"] == "confiable"
+    assert ord_np["ic_bootstrap"][0] <= ord_np["alfa"] <= ord_np["ic_bootstrap"][1]
+    assert abs(ord_py["ic_bootstrap"][0] - ord_np["ic_bootstrap"][0]) <= 0.1
+    assert ord_np == alfa_krippendorff(
+        unidades,
+        metrica="ordinal",
+        orden_categorias=[1, 2, 3, 4, 5],
+        n_remuestras=1000,
+        semilla=2026,
+        usar_numpy=True,
+    )
+
+    cte = alfa_krippendorff([[2, 2], [2, 2], [2, 2]], metrica="ordinal")
+    assert cte["varianza_nula"] is True
+    assert cte["alfa"] == 1.0
+    assert cte["exploratorio"] is True
