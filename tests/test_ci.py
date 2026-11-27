@@ -20,6 +20,7 @@ ARCHIVOS_SOLO_STDLIB = frozenset(
         "salida.py",
         "segmentacion.py",
         "similitud.py",
+        "validacion_guia.py",
     }
 )
 
