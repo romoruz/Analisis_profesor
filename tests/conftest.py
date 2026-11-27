@@ -58,3 +58,30 @@ def sd2_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
             if (respaldo / "datos").is_dir():
                 return respaldo
     return extraer_sd2(ruta_zip, tmp_path_factory.mktemp("sd2"))
+
+
+def pdflatex_funcional() -> bool:
+    """True solo si pdflatex existe Y compila la cabecera real de los simulacros.
+
+    Hay instalaciones de TeX incompletas (p. ej. sin lmodern) donde pdflatex existe pero falla;
+    ahí `armar` debe seguir sin PDF y los tests no deben exigirlo.
+    """
+    import shutil
+    import subprocess
+    import tempfile
+
+    if shutil.which("pdflatex") is None:
+        return False
+    from analisis_profesor.salida import _CABECERA_TEX
+
+    with tempfile.TemporaryDirectory() as d:
+        tex = Path(d) / "prueba.tex"
+        tex.write_text(_CABECERA_TEX + "x\n\\end{document}\n", encoding="utf-8")
+        try:
+            r = subprocess.run(
+                ["pdflatex", "-interaction=nonstopmode", "-halt-on-error", tex.name],
+                cwd=d, capture_output=True, timeout=60,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            return False
+        return r.returncode == 0

@@ -3,6 +3,7 @@ import shutil
 from pathlib import Path
 
 import pytest
+from conftest import pdflatex_funcional
 
 from analisis_profesor.cli import main
 from analisis_profesor.config import RASGOS_LEGACY_SD2
@@ -95,7 +96,7 @@ def test_regresion_exacta_legacy_simulacros_sd2(tmp_path: Path):
         semilla=13112026,
         tolerancia=1.0,
         usar_numpy=True,
-        compilar_pdf=bool(shutil.which("pdflatex")),
+        compilar_pdf=pdflatex_funcional(),
     )
 
     assert out["meta_dificultad_total"] == ref["meta_dificultad_total"] == 12.82
@@ -115,7 +116,7 @@ def test_regresion_exacta_legacy_simulacros_sd2(tmp_path: Path):
     assert (ent / "SIMULACROS.md").is_file()
     assert (ent / "SOLUCIONES.md").is_file()
     assert (ent / "simulacros.tex").is_file()
-    if shutil.which("pdflatex"):
+    if pdflatex_funcional():
         ruta_pdf = ent / "simulacros.pdf"
         assert ruta_pdf.is_file()
         assert ruta_pdf.stat().st_size > 1000
@@ -209,5 +210,5 @@ def test_armar_mini_reproducible_sin_fuga_soluciones_cli_y_respaldo_puro(
     assert "simulacros.json" in salida
     assert "SIMULACROS.md" in salida
     assert "SOLUCIONES.md" in salida
-    if shutil.which("pdflatex"):
+    if pdflatex_funcional():
         assert (ent / "simulacros.pdf").is_file()
