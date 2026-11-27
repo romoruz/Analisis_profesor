@@ -48,6 +48,7 @@ def test_verificar_banco_mini_reproducible_cli_y_respaldo_puro(
     assert res["manuales"] == 6
     assert res["verificados"] == 26
     assert res["todos_ok"] is True
+    assert res["niveles_faltantes_por_arquetipo"] == {}
 
     ruta_json = raiz_trabajo / "mini" / "08_verificacion.json"
     assert ruta_json.is_file()
@@ -156,3 +157,40 @@ def test_verificar_banco_legacy_sd2_38_automaticos_y_6_manuales(tmp_path: Path):
     assert res["manuales"] == 6
     assert res["verificados"] == 44
     assert res["todos_ok"] is True
+
+
+def test_niveles_faltantes_por_arquetipo_en_banco_y_aviso_cli(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+):
+    from analisis_profesor.banco import (
+        EjercicioBanco,
+        escribir_banco,
+        niveles_faltantes_por_arquetipo,
+        verificar_banco,
+    )
+
+    raiz_trabajo = tmp_path / "trabajo"
+    carpeta = raiz_trabajo / "incompleto"
+    carpeta.mkdir(parents=True)
+    ejercicios = [
+        EjercicioBanco(id="A-1", arquetipo="A", nivel="casi copia", verificacion="assert True"),
+        EjercicioBanco(id="A-2", arquetipo="A", nivel="adaptación", verificacion="assert True"),
+        EjercicioBanco(id="B-1", arquetipo="B", nivel="adaptación", verificacion="assert True"),
+    ]
+    assert niveles_faltantes_por_arquetipo(ejercicios) == {
+        "A": ["nueva"],
+        "B": ["casi copia", "nueva"],
+    }
+    escribir_banco(ejercicios, carpeta / "08_banco.md")
+    res = verificar_banco("incompleto", raiz_trabajo=raiz_trabajo, timeout_s=5.0)
+    assert res["todos_ok"] is True
+    assert res["niveles_faltantes_por_arquetipo"] == {
+        "A": ["nueva"],
+        "B": ["casi copia", "nueva"],
+    }
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["verificar", "incompleto"]) == 0
+    salida = capsys.readouterr().out
+    assert "niveles faltantes" in salida.lower()
+    assert "A" in salida and "nueva" in salida

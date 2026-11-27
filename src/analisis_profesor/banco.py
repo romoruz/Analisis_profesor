@@ -46,6 +46,25 @@ def normalizar_nivel(nivel: str) -> str:
     return _EQUIV_NIVEL.get(limpio, limpio)
 
 
+NIVELES_BANCO: tuple[str, ...] = ("casi copia", "adaptación", "nueva")
+
+
+def niveles_faltantes_por_arquetipo(ejercicios: Sequence[EjercicioBanco]) -> dict[str, list[str]]:
+    """Lista por arquetipo los niveles (`casi copia`, `adaptación`, `nueva`) ausentes."""
+    vistos: dict[str, set[str]] = {}
+    for ej in ejercicios:
+        if not ej.arquetipo:
+            continue
+        niv = normalizar_nivel(ej.nivel)
+        vistos.setdefault(ej.arquetipo, set()).add(niv)
+    faltantes: dict[str, list[str]] = {}
+    for arq in sorted(vistos):
+        ausentes = [nv for nv in NIVELES_BANCO if nv not in vistos[arq]]
+        if ausentes:
+            faltantes[arq] = ausentes
+    return faltantes
+
+
 def parsear_rasgos(texto: str) -> dict[str, int]:
     """Convierte `'entregables=4, algebra=1'` en diccionario entero de rasgos."""
     rasgos: dict[str, int] = {}
@@ -297,6 +316,7 @@ def verificar_banco(
     auto_fallo = sum(1 for r in resultados if r["estado"] in ("fallo", "timeout"))
     manuales = sum(1 for r in resultados if r["estado"] == "manual")
     verificados = sum(1 for r in resultados if r["verificado"])
+    faltantes_nivel = niveles_faltantes_por_arquetipo(seleccionados)
     salida = {
         "materia": materia,
         "timeout_s": timeout_s,
@@ -306,6 +326,7 @@ def verificar_banco(
         "manuales": manuales,
         "verificados": verificados,
         "todos_ok": auto_fallo == 0 and len(resultados) > 0,
+        "niveles_faltantes_por_arquetipo": faltantes_nivel,
         "resultados": resultados,
     }
     if not ids:
@@ -402,10 +423,12 @@ def convertir_banco_legacy_sd2(ruta_curso_legacy: Path, destino_md: Path) -> lis
 
 
 __all__ = [
+    "NIVELES_BANCO",
     "EjercicioBanco",
     "convertir_banco_legacy_sd2",
     "escribir_banco",
     "leer_banco",
+    "niveles_faltantes_por_arquetipo",
     "normalizar_nivel",
     "parsear_rasgos",
     "verificar_banco",

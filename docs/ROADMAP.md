@@ -164,7 +164,7 @@ probar el protocolo.
       molde. Debe castigar solo los del semestre en curso (`materia.toml: semestre`, o la fecha
       ≥ inicio de semestre).
       *Acepta:* test con un examen viejo de otro parcial que no rota.
-- [ ] 2.7 Armado: si el banco no tiene el nivel pedido (casi copia, adaptación o nueva), el
+- [x] 2.7 Armado: si el banco no tiene el nivel pedido (casi copia, adaptación o nueva), el
       protocolo §7 pide cubrir los tres niveles por arquetipo, y `armar` reporta cuántos huecos
       relajó.
 - [ ] 2.8 `ap.py validar-guia`: comprueba que los ids citados en la guía existen en

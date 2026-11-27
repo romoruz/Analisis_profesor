@@ -222,6 +222,12 @@ def main(argv: list[str] | None = None) -> int:
             f"({res['automaticos_ok']} automáticos OK, {res['manuales']} manuales, "
             f"{res['automaticos_fallidos']} fallidos)."
         )
+        faltantes_niv = res.get("niveles_faltantes_por_arquetipo") or {}
+        if faltantes_niv:
+            resumen_niv = "; ".join(
+                f"{arq}: {', '.join(nivs)}" for arq, nivs in faltantes_niv.items()
+            )
+            print(f"Aviso: niveles faltantes en 08_banco.md -> {resumen_niv}")
         return 0 if res["todos_ok"] else 1
     if a.cmd == "armar":
         ruta_banco = Path("trabajo") / a.materia / "08_banco.md"
@@ -247,6 +253,12 @@ def main(argv: list[str] | None = None) -> int:
                 f"  Simulacro {ex['numero']} ({ex['minutos']} min, "
                 f"dificultad={ex['dificultad_total']:.2f}): {ids_str}"
             )
+        print(
+            f"Huecos relajados: {res['n_huecos_relajados']}/{res['n_huecos_totales']} "
+            f"(nivel={res['n_huecos_nivel_relajado']})"
+        )
+        for aviso in res.get("avisos_relajacion", []):
+            print(f"  Aviso: {aviso}")
         ent = res["entregables"]
         print(
             f"Entregables: SIMULACROS.md, SOLUCIONES.md, simulacros.tex"
