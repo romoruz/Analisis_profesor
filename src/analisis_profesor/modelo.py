@@ -574,6 +574,57 @@ def _base_ejercicio_tarea(item_id: str) -> str:
     return re.sub(r"[a-z]+$", "", item_id)
 
 
+def _rango_semestre(semestre: str, fecha_objetivo: str = "") -> tuple[str, str] | None:
+    """Devuelve `(fecha_inicio, fecha_fin)` en formato `AAAA-MM-DD` para el semestre dado."""
+    texto = semestre.strip()
+    m_ciclo = re.fullmatch(
+        r"(\d{4})\s*[-/]\s*(II|I|2|1|primavera|otoño|otono|p|o|fall)",
+        texto,
+        re.IGNORECASE,
+    )
+    if m_ciclo:
+        anio, term = m_ciclo.group(1), m_ciclo.group(2).lower()
+        if term in ("i", "1", "primavera", "p"):
+            return (f"{anio}-01-01", f"{anio}-06-30")
+        return (f"{anio}-07-01", f"{anio}-12-31")
+    if re.fullmatch(r"\d{4}", texto):
+        return (f"{texto}-01-01", f"{texto}-12-31")
+    m_obj = re.fullmatch(r"(\d{4})-(\d{2})-(\d{2})", fecha_objetivo.strip())
+    if m_obj:
+        anio, mes = m_obj.group(1), int(m_obj.group(2))
+        return (f"{anio}-01-01", f"{anio}-06-30") if mes <= 6 else (
+            f"{anio}-07-01",
+            f"{anio}-12-31",
+        )
+    return None
+
+
+def examen_en_semestre_actual(
+    fecha_examen: str,
+    *,
+    semestre: str = "",
+    inicio_semestre: str = "",
+    fecha_objetivo: str = "",
+) -> bool:
+    """Indica si `fecha_examen` corresponde al semestre en curso según `materia.toml`.
+
+    Regla (tarea 2.6 de `docs/ROADMAP.md`): si `inicio_semestre` (`AAAA-MM-DD`) está
+    definido, exige `fecha_examen >= inicio_semestre`; si no, usa el intervalo calendario
+    de `semestre` (`AAAA-I`: ene-jun, `AAAA-II`: jul-dic) o deduce el ciclo de
+    `fecha_objetivo`. Exámenes sin fecha real o de semestres previos devuelven `False`.
+    """
+    limpia = fecha_examen.strip()
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", limpia) or limpia in ("0000-00-00", "9999-99-99"):
+        return False
+    ini_manual = inicio_semestre.strip()
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}", ini_manual):
+        return limpia >= ini_manual
+    rango = _rango_semestre(semestre, fecha_objetivo)
+    if rango is not None:
+        return rango[0] <= limpia <= rango[1]
+    return False
+
+
 def construir_cfg_desde_etiquetas(
     config: Mapping,
     etiquetas: Sequence[Etiqueta],
@@ -667,13 +718,23 @@ def construir_cfg_desde_etiquetas(
     molde: Counter[str] = Counter()
     ya_visto = objetivo.get("ya_examinado_este_semestre", [])
     rotacion_set: set[str] = {k for k in ya_visto if k in k_set}
-    for et, doc_id, _fecha, _parcial in preguntas_examen:
+    semestre_cfg = str(config.get("semestre", ""))
+    inicio_sem_cfg = str(objetivo.get("inicio_semestre", ""))
+    fecha_obj_cfg = str(objetivo.get("fecha", ""))
+    docs_rotados: set[str] = set()
+    for et, doc_id, fecha, _parcial in preguntas_examen:
         if et.arquetipo not in k_set:
             continue
         if doc_id in molde_docs:
             molde[et.arquetipo] += 1
-        else:
+        elif examen_en_semestre_actual(
+            fecha,
+            semestre=semestre_cfg,
+            inicio_semestre=inicio_sem_cfg,
+            fecha_objetivo=fecha_obj_cfg,
+        ):
             rotacion_set.add(et.arquetipo)
+            docs_rotados.add(doc_id)
 
     # pi_molde: preguntas cuyo examen tenía al menos un examen previo del mismo parcial
     previos_por_doc: dict[str, bool] = {}
@@ -758,6 +819,7 @@ def construir_cfg_desde_etiquetas(
     resumen_derivacion = {
         "n_examenes_molde": len(molde_docs),
         "examenes_molde": sorted(molde_docs),
+        "examenes_rotacion": sorted(docs_rotados),
         "n_examenes_vistos": len(orden_ex),
         "n_tareas_repetidas": len(repetidos_tarea),
         "material": cfg_salida["material"],

@@ -7,6 +7,7 @@ semestre = "2026-II"
 [objetivo]
 parcial = "P2"
 fecha = ""                       # AAAA-MM-DD
+# inicio_semestre = ""           # opcional (AAAA-MM-DD); si falta se usa `semestre`
 temas = []                       # ["4.3", "4.4"]; vacío = se deduce del molde
 molde = []                       # ids de exámenes viejos del MISMO parcial, p. ej. ["P2_2020-04-29"]
 ya_examinado_este_semestre = []  # arquetipos que ya salieron (se castigan con rho)

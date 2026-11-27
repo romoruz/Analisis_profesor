@@ -264,6 +264,9 @@ def leer_config_materia(ruta_o_carpeta: Path) -> dict[str, Any]:
     objetivo = {
         "parcial": str(objetivo_raw.get("parcial", "")),
         "fecha": str(objetivo_raw.get("fecha", "")),
+        "inicio_semestre": str(
+            objetivo_raw.get("inicio_semestre") or crudo.get("inicio_semestre") or ""
+        ),
         "temas": [str(t) for t in objetivo_raw.get("temas", [])],
         "molde": [str(m) for m in objetivo_raw.get("molde", [])],
         "ya_examinado_este_semestre": [

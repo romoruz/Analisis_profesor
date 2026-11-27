@@ -160,7 +160,7 @@ probar el protocolo.
   `docs/pruebas_chat/gemini_2026-11-27.md`. De ahí sale el protocolo v6: solo el zip, ficha de
   ejecución, evidencia por tema y no leer análisis previos.
 - [ ] 2.5 `ap.py acuerdo` (adelanta la 3.1): Claude tuvo que hacerlo a mano.
-- [ ] 2.6 Rotación: hoy `modelo.py` castiga los arquetipos de **cualquier** examen que no sea
+- [x] 2.6 Rotación: hoy `modelo.py` castiga los arquetipos de **cualquier** examen que no sea
       molde. Debe castigar solo los del semestre en curso (`materia.toml: semestre`, o la fecha
       ≥ inicio de semestre).
       *Acepta:* test con un examen viejo de otro parcial que no rota.
