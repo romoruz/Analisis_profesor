@@ -175,7 +175,7 @@ probar el protocolo.
 Ver `docs/pruebas_chat/ronda2_2026-11-27.md`. Las cifras de los dos chats se reproducen con
 `main`. Tareas que salen:
 
-- [ ] 2.9 **Arquetipos estables por materia.** Si existe `materias/<id>/materia.toml` aprobado
+- [x] 2.9 **Arquetipos estables por materia.** Si existe `materias/<id>/materia.toml` aprobado
       (o el usuario sube uno), el protocolo lo usa en vez de inventar arquetipos nuevos. Así las
       probabilidades son comparables entre corridas y chats. Agregar `materias/sd2/materia.toml`
       con los 10 arquetipos de legacy.

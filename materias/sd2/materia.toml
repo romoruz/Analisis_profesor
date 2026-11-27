@@ -1,0 +1,38 @@
+# Arquetipos estables para Sistemas Dinámicos II (mismas claves y minutos que legacy).
+# Al usarlo en una corrida, cópialo a trabajo/<id>/materia.toml y llena solo semestre y [objetivo].
+id = "sd2"
+nombre = "Sistemas Dinámicos II"
+profesor = ""
+semestre = ""
+
+[objetivo]
+parcial = ""
+fecha = ""
+temas = []
+molde = []
+ya_examinado_este_semestre = []
+
+[formato]
+preguntas = { "4" = 1.0 }
+minutos = []
+puntos_por_pregunta = []
+
+[arquetipos]
+A = ["Método del potencial: U, equilibrios, estabilidad, retrato fase", 25]
+B = ["Bifurcación en EDO de 2o orden o escalar: lambda_0, retratos y diagrama", 25]
+C = ["Bifurcación en sistema plano: ceroclinas, equilibrios según el parámetro", 30]
+D = ["Sistema polarizable sin parámetro: ciclos límite, omega y alfa límites", 25]
+E = ["Sistema en polares con parámetro: valores de bifurcación y retratos", 30]
+F = ["Existencia o no de órbitas periódicas (anillo atrapante, Dulac, energía)", 20]
+G = ["Demostración sobre conjuntos límite (omega(p))", 15]
+H = ["Demostración tipo Poincaré-Bendixson / no existencia de órbitas", 15]
+I = ["Existencia, unicidad e intervalo maximal; simetría de soluciones", 20]
+J = ["Funciones de Lyapunov: estabilidad y cuenca", 20]
+
+[rasgos]
+
+[modelo]
+semilla = 2026
+beta = 6
+suavizado = 0.3
+rho = 0.6
