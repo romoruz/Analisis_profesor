@@ -86,6 +86,12 @@ def main(argv: list[str] | None = None) -> int:
     s_arm.add_argument("--semilla", type=int, default=2026, help="semilla para desempate")
     s_arm.add_argument("--tolerancia", type=float, default=1.0, help="banda ± de dificultad")
     s_arm.add_argument("--sin-pdf", action="store_true", help="no compilar simulacros.tex a PDF")
+    s_val = sub.add_parser("validar-guia", help="verifica citas y cifras de GUIA_PARCIAL.md")
+    s_val.add_argument("materia", help="id de la materia en trabajo/<id>/")
+    s_val.add_argument("--guia", default=None, help="ruta alternativa a GUIA_PARCIAL.md")
+    s_val.add_argument(
+        "--tolerancia", type=float, default=0.011, help="tolerancia numérica contra 07_modelo.json"
+    )
     for nombre, (_fase, ayuda) in PENDIENTES.items():
         s = sub.add_parser(nombre, help=ayuda)
         s.add_argument("args", nargs="*")
@@ -256,6 +262,31 @@ def main(argv: list[str] | None = None) -> int:
         if not a.sin_pdf and not ent.get("pdf_generado") and motivo:
             print(f"Aviso: no se generó el PDF ({motivo}). Usa SIMULACROS.md o el .tex.")
         return 0
+    if a.cmd == "validar-guia":
+        base = Path("trabajo") / a.materia
+        ruta_items = base / "03_items.jsonl"
+        ruta_modelo = base / "07_modelo.json"
+        guia_path = Path(a.guia) if a.guia else (base / "entregables" / "GUIA_PARCIAL.md")
+        for req in (ruta_items, ruta_modelo, guia_path):
+            if not req.is_file():
+                print(f"Error: no existe {req}", file=sys.stderr)
+                return 1
+        from analisis_profesor.validacion_guia import validar_guia
+
+        res = validar_guia(a.materia, ruta_guia=guia_path, tolerancia=a.tolerancia)
+        estado = "VÁLIDA" if res["valida"] else "INVÁLIDA"
+        n_k = len(res["arquetipos_en_tabla"]) + len(res["arquetipos_faltantes"])
+        print(f"Validación de guía ({a.materia}): {estado} -> {base / '09_validacion_guia.json'}")
+        print(
+            f"  IDs citados: {res['n_ids_citados']} "
+            f"(inexistentes: {len(res['ids_inexistentes'])}); "
+            f"temas validados: {res['temas_validados']}/{n_k}"
+        )
+        for aviso in res["avisos"]:
+            print(f"  Aviso: {aviso}")
+        for err in res["errores"]:
+            print(f"  Error: {err}")
+        return 0 if res["valida"] else 1
     fase, _ = PENDIENTES[a.cmd]
     print(f"PENDIENTE: `{a.cmd}` se implementa en la {fase} (docs/ROADMAP.md). "
           "Mientras tanto, haz este paso a mano según el Anexo C de PROTOCOLO.md.")

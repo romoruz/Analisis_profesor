@@ -167,7 +167,7 @@ probar el protocolo.
 - [ ] 2.7 Armado: si el banco no tiene el nivel pedido (casi copia, adaptación o nueva), el
       protocolo §7 pide cubrir los tres niveles por arquetipo, y `armar` reporta cuántos huecos
       relajó.
-- [ ] 2.8 `ap.py validar-guia`: comprueba que los ids citados en la guía existen en
+- [x] 2.8 `ap.py validar-guia`: comprueba que los ids citados en la guía existen en
       `03_items.jsonl` y que las cifras de la tabla de temas coinciden con `07_modelo.json`.
 
 ## Fase 3: Extracción y etiquetado de calidad
